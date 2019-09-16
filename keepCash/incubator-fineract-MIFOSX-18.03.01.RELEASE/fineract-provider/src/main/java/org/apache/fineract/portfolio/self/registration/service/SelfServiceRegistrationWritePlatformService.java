@@ -28,4 +28,6 @@ public interface SelfServiceRegistrationWritePlatformService {
     public AppUser createUser(String apiRequestBodyAsJson);
     
     public AppUser newUserRegister(String apiRequestBodyAsJson, String role);
+    
+    public String sendAuthorizationMailByAgent(AppUser appUser);
 }

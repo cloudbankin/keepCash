@@ -59,11 +59,15 @@ public class SmsSender {
 		this.server = server;
 		this.port = port;
 	}
-	private void submitMessage() {
+
+	private void submitMessage(String message , String mobileNumber) {
 		try {
 			// Url that will be called to submit the message
-			URL sendUrl = new URL("http://" + this.server + ":" + this.port
+			/*URL sendUrl = new URL("http://" + this.server + ":" + this.port
 			+ "/bulksms/bulksms");
+			*/
+						
+			URL sendUrl = new URL("http://sms6.rmlconnect.net:8080/bulksms/bulksms?username=BENKEEPD1&password=hGxMPXya&type=0&dlr=1&destination="+mobileNumber+"&source=KEEPIT&message="+message+"");
 			HttpURLConnection httpConnection = (HttpURLConnection) sendUrl
 			.openConnection();
 			// This method sets the method type to POST so that
@@ -111,30 +115,64 @@ public class SmsSender {
 		 }
 	}
 	
-	public static void sendOtp(String message, String destination) {
+	public static void sendOtp(String OTP, String destination) {
 		try {
-			SmsSender s = new SmsSender("server", 8080, "xxxx",
-					"xxxx", message, "1", "0", destination,
-					"Update");
+			String message = OTP+"%20is%20your%20OTP.%20Please%20do%20not%20share%20this%20OTP%20with%20anyone.%20Thank%20you,%20keepCash.";
 			
-			s.submitMessage();
+			SmsSender s = new SmsSender("", 8080, "BENKEEPD1",
+					"hGxMPXya","", "1", "0","",
+					"KEEPIT");
+			s.submitMessage(message, destination);
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
+	public static void sendTransactionPIN(String PIN, String destination) {
+		try {
+			String message = PIN+"%20is%20your%20transaction%20PIN.%20do%20not%20share%20this%20transaction%20PIN%20with%20anyone.%20Thank%20you,%20keepCash.";
+			
+			SmsSender s = new SmsSender("", 8080, "BENKEEPD1",
+					"hGxMPXya","", "1", "0","",
+					"KEEPIT");
+			s.submitMessage(message, destination);
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	public static void main(String[] args) {
 	try {
 	// Below exmaple is for sending Plain text
-	SmsSender s = new SmsSender("server", 8080, "xxxx",
-	"xxxx", "test for unicode", "1", "0", "440000xxx",
-	"Update");
-	s.submitMessage();
+	SmsSender s = new SmsSender("", 8080, "BENKEEPD1",
+	"hGxMPXya", "", "1", "0", "",
+	"KEEPIT");
+	
+		/*SmsSender s = new SmsSender("ems.rmlconnect.net", 8080, "BenKeep",
+				"qzNZ95q9", "test for unicode", "1", "0", "9629461303",
+				"KEEPIT");
+		*/
+	//String message = new String ("1235isyourtransactionPINdonotsharethistransactionPINwithanyone.Thankyou,keepCash.");
+	//String message = SendRandomOtpMessage.randomAuthorizationTokenGeneration();
+	
+	String message = "1234%20is%20your%20transaction%20PIN.%20do%20not%20share%20this%20transaction%20PIN%20with%20anyone.%20Thank%20you,%20keepCash.";
+	//String message = new String("isyou");
+	s.submitMessage(message,"9629461303");
+	
 	// Below exmaple is for sending unicode
-	SmsSender s1 = new SmsSender("server", 8080, "xxxx",
-	"xxx", convertToUnicode("test for unicode").toString(),
-	"1", "2", "44000xx", "Update");
-	s1.submitMessage();
+	/*SmsSender s1 = new SmsSender("client-us.rmlconnect.net", 2345, "KeepCash",
+	"ZkvAxq77", convertToUnicode("test for unicode").toString(),
+	"1", "2", "9629461303", "KEEPIT");
+	s1.submitMessage();*/
 	} catch (Exception ex) {
 	}
 	}

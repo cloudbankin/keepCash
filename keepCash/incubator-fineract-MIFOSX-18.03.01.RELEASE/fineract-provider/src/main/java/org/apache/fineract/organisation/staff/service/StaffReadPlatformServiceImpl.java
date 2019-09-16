@@ -68,6 +68,13 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
             		+ " s.is_active as isActive, s.joining_date as joiningDate from m_staff s "
                     + " join m_office o on o.id = s.office_id";
         }
+        
+        public String getEmployeeSchema() {
+            return " s.id as id,s.office_id as officeId, o.name as officeName, s.firstname as firstname, s.lastname as lastname,"
+                    + " s.display_name as displayName, s.is_loan_officer as isLoanOfficer, s.external_id as externalId, s.mobile_no as mobileNo,"
+            		+ " s.is_active as isActive, s.joining_date as joiningDate from m_staff s "
+                    + " join m_office o on o.id = s.office_id";
+        }
 
         @Override
         public StaffData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
@@ -213,6 +220,28 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
     	
         final StaffMapper rm = new StaffMapper();
         String sql = "select " + rm.schema();
+        final String hierarchy = this.context.authenticatedUser().getOffice().getHierarchy()+"%";
+        if (StringUtils.isNotBlank(extraCriteria)){
+        	sql += " where " + extraCriteria;        	
+        }
+        sql = sql + " order by s.lastname";
+        if(officeId==null){
+        	return this.jdbcTemplate.query(sql, rm, new Object[] {hierarchy });
+        }        
+        return this.jdbcTemplate.query(sql, rm, new Object[] {officeId, hierarchy });
+    }
+    
+    @Override
+    public Collection<StaffData> retrieveAllStaffUnderAgent(final String sqlSearch, final Long officeId, final boolean loanOfficersOnly,
+            final String status) {
+        final String extraCriteria = getStaffCriteria(sqlSearch, officeId, loanOfficersOnly, status);
+        return retrieveAllStaffUnderAgent(extraCriteria, officeId);
+    }
+
+    private Collection<StaffData> retrieveAllStaffUnderAgent(final String extraCriteria, Long officeId) {
+    	
+        final StaffMapper rm = new StaffMapper();
+        String sql = "select " + rm.getEmployeeSchema();
         final String hierarchy = this.context.authenticatedUser().getOffice().getHierarchy()+"%";
         if (StringUtils.isNotBlank(extraCriteria)){
         	sql += " where " + extraCriteria;        	

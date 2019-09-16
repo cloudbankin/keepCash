@@ -177,6 +177,14 @@ public class Staff extends AbstractPersistableCustom<Long> {
             this.lastname = newValue;
             lastnameChanged = true;
         }
+        boolean emailAddressChanged = false;
+        final String emailAddressParamName = "emailAddress";
+        if (command.isChangeInStringParameterNamed(emailAddressParamName, this.emailAddress)) {
+            final String newValue = command.stringValueOfParameterNamed(emailAddressParamName);
+            actualChanges.put(emailAddressParamName, newValue);
+            this.emailAddress = newValue;
+            emailAddressChanged = true;
+        }
 
         if (firstnameChanged || lastnameChanged) {
             deriveDisplayName(this.firstname);

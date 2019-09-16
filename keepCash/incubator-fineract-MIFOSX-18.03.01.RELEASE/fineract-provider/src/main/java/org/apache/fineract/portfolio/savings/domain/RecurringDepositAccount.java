@@ -615,7 +615,7 @@ public class RecurringDepositAccount extends SavingsAccount {
         boolean isInterestTransfer = false;
         LocalDate postInterestOnDate = null;
         final List<PostingPeriod> postingPeriods = calculateInterestUsing(mc, interestPostingUpToDate.minusDays(1), isInterestTransfer,
-                isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+                isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate, null, false);
 
         Money interestPostedToDate = Money.zero(this.currency);
 
@@ -731,10 +731,11 @@ public class RecurringDepositAccount extends SavingsAccount {
 
     @Override
     public List<PostingPeriod> calculateInterestUsing(final MathContext mc, final LocalDate postingDate, boolean isInterestTransfer,
-            final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,final LocalDate  postAsInterestOn) {
+            final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,final LocalDate  postAsInterestOn, 
+            final Set<Long> transactionIds, final boolean isAgentWithdrawal) {
         final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
         return super.calculateInterestUsing(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                financialYearBeginningMonth, postAsInterestOn);
+                financialYearBeginningMonth, postAsInterestOn, null, false);
     }
 
     private LocalDate interestPostingUpToDate(final LocalDate interestPostingDate) {

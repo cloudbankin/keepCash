@@ -21,6 +21,8 @@ public class CustomerConstants {
 	public static final String dateOfBirthParamName = "dateOfBirth";
 	public static final String isAgreementSignUpParamName = "isAgreementSignUp";
 	public static final String isActiveParamName = "isActive";
+	public static final String faceUniqueIdParamName = "faceUniqueId";
+	public static final String transactionPinParamName = "transactionPin";
 	
 	public static final String parentEntityIdParamName = "parentEntityId";
 	public static final String paraentEntityTypeParamName = "parentEntityType";
@@ -35,7 +37,19 @@ public class CustomerConstants {
 	public static final String createdDateParamName = "createdDate";
 	public static final String lastModiDateParamName = "lastModifiedDate";
 	public static final String storeageEnumParamName = "storageTypeEnum";
-	//public static final String isActiveParamName = "active";
+	
+	public static final String customerGoalId = "goalId";
+	public static final String customerGoalAmount = "goalAmount";
+	public static final String customerGoalStartDate = "goalStartDate";
+	public static final String customerGoalEndDate = "goalEndDate";
+	public static final String customerGoalName = "goalName";
+
+	public static final String latitudeParamName = "latitude";
+	public static final String longitudeParamName = "longitude";
+	public static final String locationNameParamName = "locationName";
+	public static final String locationAddressParamName = "locationAddress";
+	public static final String ipAddressParamName = "ipAddress";
+	public static final String deviceIdParamName = "deviceId";
 	
 }
 

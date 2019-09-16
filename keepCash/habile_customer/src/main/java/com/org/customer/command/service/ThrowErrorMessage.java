@@ -20,6 +20,7 @@ public class ThrowErrorMessage {
 	    			JsonObject jsonObject = new JsonObject();
 	    			
 	        		jsonObject.addProperty("developerMessage", dataValidationError.getDeveloperMessage());
+	    			jsonObject.addProperty("status"," failed");
 	        		jsonObject.addProperty("defaultUserMessage", dataValidationError.getDefaultUserMessage());
 	        		jsonObject.addProperty("userMessageGlobalisationCode", dataValidationError.getUserMessageGlobalisationCode());
 	        		jsonObject.addProperty("parameterName", dataValidationError.getParameterName());

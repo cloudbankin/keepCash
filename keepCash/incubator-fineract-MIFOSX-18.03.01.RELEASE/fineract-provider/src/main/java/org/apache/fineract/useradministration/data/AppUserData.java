@@ -22,9 +22,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.organisation.office.data.OfficeData;
 import org.apache.fineract.organisation.staff.data.StaffData;
 import org.apache.fineract.portfolio.client.data.ClientData;
+
 
 /**
  * Immutable data object for application user data.
@@ -52,6 +54,8 @@ public class AppUserData {
     private final Collection<RoleData> selectedRoles;
     private final StaffData staff;
     private final Boolean isSelfServiceUser;
+    private final EnumOptionData userType;
+    private final EnumOptionData status;
     
 	@SuppressWarnings("unused")
     private Set<ClientData> clients;
@@ -83,6 +87,8 @@ public class AppUserData {
         this.staff = null;
         this.isSelfServiceUser = null;
         this.clients = null;
+        this.userType = null;
+        this.status = null;
     }
 
     public Integer getRowIndex() {
@@ -91,28 +97,37 @@ public class AppUserData {
 
     public static AppUserData template(final AppUserData user, final Collection<OfficeData> officesForDropdown) {
         return new AppUserData(user.id, user.username, user.email, user.officeId, user.officeName, user.firstname, user.lastname,
-                user.availableRoles, user.selectedRoles, officesForDropdown, user.staff, user.passwordNeverExpires, user.isSelfServiceUser);
+                user.availableRoles, user.selectedRoles, officesForDropdown, user.staff, user.passwordNeverExpires, user.isSelfServiceUser, null);
     }
 
     public static AppUserData template(final Collection<OfficeData> offices, final Collection<RoleData> availableRoles) {
-        return new AppUserData(null, null, null, null, null, null, null, availableRoles, null, offices, null, null, null);
+        return new AppUserData(null, null, null, null, null, null, null, availableRoles, null, offices, null, null, null, null);
     }
 
     public static AppUserData dropdown(final Long id, final String username) {
-        return new AppUserData(id, username, null, null, null, null, null, null, null, null, null, null, null);
+        return new AppUserData(id, username, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     public static AppUserData instance(final Long id, final String username, final String email, final Long officeId,
             final String officeName, final String firstname, final String lastname, final Collection<RoleData> availableRoles,
-            final Collection<RoleData> selectedRoles, final StaffData staff, final Boolean passwordNeverExpire, final Boolean isSelfServiceUser) {
+            final Collection<RoleData> selectedRoles, final StaffData staff, final Boolean passwordNeverExpire, final Boolean isSelfServiceUser,
+            final EnumOptionData appUserTypeEnum) {
         return new AppUserData(id, username, email, officeId, officeName, firstname, lastname, availableRoles, selectedRoles, null, staff,
-                passwordNeverExpire, isSelfServiceUser);
+                passwordNeverExpire, isSelfServiceUser, appUserTypeEnum);
+    }
+    
+    public static AppUserData mobileAppUserData(final Long id, final String username) {
+        return new AppUserData(id, username, null, null, null, null, null, null, null, null, null, null, null, null);
+    }
+    
+    public static AppUserData getAgentAppUserData(final Long id, final String username, final EnumOptionData appUserTypeEnum) {
+        return new AppUserData(id, username, null, null, null, null, null, null, null, null, null, null, null, appUserTypeEnum);
     }
 
     private AppUserData(final Long id, final String username, final String email, final Long officeId, final String officeName,
             final String firstname, final String lastname, final Collection<RoleData> availableRoles,
             final Collection<RoleData> selectedRoles, final Collection<OfficeData> allowedOffices, final StaffData staff,
-            final Boolean passwordNeverExpire, final Boolean isSelfServiceUser) {
+            final Boolean passwordNeverExpire, final Boolean isSelfServiceUser, final EnumOptionData appUserTypeEnum) {
         this.id = id;
         this.username = username;
         this.officeId = officeId;
@@ -126,6 +141,8 @@ public class AppUserData {
         this.staff = staff;
         this.passwordNeverExpires = passwordNeverExpire;
         this.isSelfServiceUser = isSelfServiceUser;
+        this.userType = appUserTypeEnum;
+        this.status = null;
     }
 
     public boolean hasIdentifyOf(final Long createdById) {
@@ -160,5 +177,14 @@ public class AppUserData {
     public boolean isSelfServiceUser() {
 		return this.isSelfServiceUser==null?false:this.isSelfServiceUser;
 	}
-
+	public Long getId() {
+		return id;
+	}
+	public EnumOptionData getUserType() {
+		return userType;
+	}
+	 public String getUsername() {
+			return username;
+		}
+	
 }

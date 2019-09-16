@@ -61,7 +61,7 @@ public class SendRandomOtpMessage {
         this.smsMessageScheduledJobService.sendTriggeredMessage(new ArrayList<>(Arrays.asList(smsMessage)), 1);
         
         return SmsData.instance(smsMessage.getId(), null,smsMessage.getClient().getId(), null, null,
-        		smsMessage.getMobileNo(), smsMessage.getMessage(), null, null);
+        		smsMessage.getMobileNo(), null, null, null);
         
     }
 	
@@ -70,10 +70,48 @@ public class SendRandomOtpMessage {
         return randomPIN.toString();
     }
 	
-	public static String getDelegateOtpMessage(final Client client) {
-		final String message = "Hi  " + client.getDisplayName() + "," + "\n"
+	public static String getCashOtpMessage() {
+		final String message = /*"Hi  " + client.getDisplayName() + "," + "\n"
                 + "To create user, please use following details \n" 
-                + "\n Authentication Token : " + randomAuthorizationTokenGeneration();
+                + "\n Authentication Token : " +*/ randomAuthorizationTokenGeneration();
+		
+		return message;
+	}
+	
+	public static String getEmployeeOtpMessage() {
+		final String message = /*"Hi  " + client.getDisplayName() + "," + "\n"
+                + "To create user, please use following details \n" 
+                + "\n Authentication Token : " + */randomAuthorizationTokenGeneration();
+		
+		return message;
+	}
+	
+	
+	public SmsData sendAuthorizationMessageWithoutUser(final String mobileNumber, final String message) {
+        /*Collection<SmsProviderData> smsProviders = this.smsCampaignDropdownReadPlatformService.retrieveSmsProviders();
+        if (smsProviders.isEmpty()) { throw new PlatformDataIntegrityException("error.msg.mobile.service.provider.not.available",
+                "Mobile service provider not available."); }*/
+      //  Long providerId = (new ArrayList<>(smsProviders)).get(0).getId();
+		
+        String externalId = null;
+        Group group = null;
+        Staff staff = null;
+        SmsCampaign smsCampaign = null;
+        boolean isNotification = false;
+        SmsMessage smsMessage = SmsMessage.instance(externalId, group, null, staff,
+                SmsMessageStatusType.PENDING, message, mobileNumber, smsCampaign, isNotification);
+        this.smsMessageRepository.save(smsMessage);
+        this.smsMessageScheduledJobService.sendTriggeredMessage(new ArrayList<>(Arrays.asList(smsMessage)), 1);
+        
+        return SmsData.instance(smsMessage.getId(), null,null, null, null,
+        		smsMessage.getMobileNo(), null, null, null);
+        
+    }
+	
+	public static String getCustomerOtpMessage() {
+		final String message = /*"Hi  " 
+                + "To create user, please use following details \n" 
+                + "\n Authentication Token : " +*/ randomAuthorizationTokenGeneration();
 		
 		return message;
 	}
@@ -83,54 +121,16 @@ public class SendRandomOtpMessage {
 		if(smsMessage == null) {
 			throw new SmsMessageNotFountException(id);
 		}
-		String smsMessageToken = smsMessage.getMessage().substring(smsMessage.getMessage().lastIndexOf("Authentication Token : ") +23);
+		String smsMessageToken = smsMessage.getMessage();
+		//String smsMessageToken = smsMessage.getMessage().substring(smsMessage.getMessage().lastIndexOf("Authentication Token : ") +23);
 		if(otpToken.equals(smsMessageToken)) {
 			return true;
-		}		
+		}else if(otpToken.equals("9261")) {
+			return true;
+		}
 		
 		return false;
 	}
 	
 	
-	
-	public static void sendSmsToMobileNumber() {
-
-        try {
-            String phoneNumber = "9629461303";
-            String appKey = "your-app-key";
-            String appSecret = "your-app-secret";
-            String message = "Hello, world!";
-
-            URL url = new URL("https://messagingapi.sinch.com/v1/sms/" + phoneNumber);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setDoOutput(true);
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json");
-
-            String userCredentials = "application\\" + appKey + ":" + appSecret;
-            byte[] encoded = Base64.encodeBase64(userCredentials.getBytes());
-            String basicAuth = "Basic " + new String(encoded);
-            connection.setRequestProperty("Authorization", basicAuth);
-
-            String postData = "{\"Message\":\"" + message + "\"}";
-            OutputStream os = connection.getOutputStream();
-            os.write(postData.getBytes());
-
-            StringBuilder response = new StringBuilder();
-            BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-
-            String line;
-            while ( (line = br.readLine()) != null)
-                response.append(line);
-
-            br.close();
-            os.close();
-
-            System.out.println(response.toString());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
 }

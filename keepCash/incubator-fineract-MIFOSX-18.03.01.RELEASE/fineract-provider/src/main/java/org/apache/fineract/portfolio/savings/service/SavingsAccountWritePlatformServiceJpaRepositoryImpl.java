@@ -18,11 +18,25 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
-import static org.apache.fineract.portfolio.savings.SavingsApiConstants.*;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_CHARGE_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.SAVINGS_ACCOUNT_RESOURCE_NAME;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.amountParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.chargeIdParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.dueAsOfDateParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withHoldTaxParamName;
+import static org.apache.fineract.portfolio.savings.SavingsApiConstants.withdrawBalanceParamName;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
@@ -34,13 +48,20 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuild
 import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.exception.PlatformServiceUnavailableException;
+import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
+import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.dataqueries.data.EntityTables;
 import org.apache.fineract.infrastructure.dataqueries.data.StatusEnum;
 import org.apache.fineract.infrastructure.dataqueries.service.EntityDatatableChecksWritePlatformService;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
+import org.apache.fineract.notification.service.NotificationWritePlatformService;
 import org.apache.fineract.organisation.holiday.domain.HolidayRepositoryWrapper;
-import org.apache.fineract.organisation.monetary.domain.*;
+import org.apache.fineract.organisation.monetary.domain.ApplicationCurrency;
+import org.apache.fineract.organisation.monetary.domain.ApplicationCurrencyRepositoryWrapper;
+import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
+import org.apache.fineract.organisation.monetary.domain.Money;
+import org.apache.fineract.organisation.monetary.domain.MoneyHelper;
 import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.organisation.staff.domain.Staff;
 import org.apache.fineract.organisation.staff.domain.StaffRepositoryWrapper;
@@ -65,25 +86,59 @@ import org.apache.fineract.portfolio.note.domain.Note;
 import org.apache.fineract.portfolio.note.domain.NoteRepository;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 import org.apache.fineract.portfolio.paymentdetail.service.PaymentDetailWritePlatformService;
+import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsAccountTransactionType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
 import org.apache.fineract.portfolio.savings.SavingsTransactionBooleanValues;
+import org.apache.fineract.portfolio.savings.api.SavingsAccountTransactionsApiResource;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountChargeDataValidator;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountDataValidator;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDTO;
+import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionDataValidator;
-import org.apache.fineract.portfolio.savings.domain.*;
-import org.apache.fineract.portfolio.savings.exception.*;
+import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransaction;
+import org.apache.fineract.portfolio.savings.domain.DepositAccountOnHoldTransactionRepository;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountCharge;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountChargeRepositoryWrapper;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountDomainService;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepository;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
+import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException;
 import org.apache.fineract.portfolio.savings.exception.PostInterestAsOnDateException.PostInterestAsOnException_TYPE;
+import org.apache.fineract.portfolio.savings.exception.PostInterestClosingDateException;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountClosingNotAllowedException;
+import org.apache.fineract.portfolio.savings.exception.SavingsAccountTransactionNotFoundException;
+import org.apache.fineract.portfolio.savings.exception.SavingsOfficerAssignmentException;
+import org.apache.fineract.portfolio.savings.exception.SavingsOfficerUnassignmentException;
+import org.apache.fineract.portfolio.savings.exception.TransactionUpdateNotAllowedException;
+import org.apache.fineract.portfolio.springBoot.HttpConnectionTemplate;
+import org.apache.fineract.portfolio.springBoot.NotificationMessage;
+import org.apache.fineract.portfolio.springBoot.enumType.AppUserTypes;
+import org.apache.fineract.portfolio.springBoot.enumType.SavingsAccountTypeEnum;
+import org.apache.fineract.portfolio.springBoot.enumType.SavingsTransactionDetailsTypeEnum;
+import org.apache.fineract.portfolio.springBoot.service.PushNotification;
+import org.apache.fineract.useradministration.data.AppUserData;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.apache.fineract.useradministration.domain.AppUserRepositoryWrapper;
+import org.apache.fineract.useradministration.service.AppUserReadPlatformServiceImpl;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 @Service
 public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements SavingsAccountWritePlatformService {
@@ -113,6 +168,12 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     private final AppUserRepositoryWrapper appuserRepository;
     private final StandingInstructionRepository standingInstructionRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
+    private final FromJsonHelper fromApiJsonHelper;
+    private final SavingsAccountTransactionsApiResource savingsAccountTransactionsApiResource;
+    private final SavingsAccountRepository savingsAccountRepository;
+    private final AppUserReadPlatformServiceImpl appUserReadPlatformServiceImpl; 
+    private final NotificationWritePlatformService notificationWritePlatformService;
+    private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
 
     @Autowired
     public SavingsAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -134,7 +195,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository,
             final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
             final AppUserRepositoryWrapper appuserRepository, final StandingInstructionRepository standingInstructionRepository,
-            final BusinessEventNotifierService businessEventNotifierService) {
+            final BusinessEventNotifierService businessEventNotifierService, final FromJsonHelper fromApiJsonHelper,
+            final SavingsAccountTransactionsApiResource savingsAccountTransactionsApiResource, final SavingsAccountRepository savingsAccountRepository,
+            final AppUserReadPlatformServiceImpl appUserReadPlatformServiceImpl, final NotificationWritePlatformService notificationWritePlatformService,
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService) {
         this.context = context;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
@@ -160,6 +224,12 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.appuserRepository = appuserRepository;
         this.standingInstructionRepository = standingInstructionRepository;
         this.businessEventNotifierService = businessEventNotifierService;
+        this.fromApiJsonHelper = fromApiJsonHelper;
+        this.savingsAccountTransactionsApiResource = savingsAccountTransactionsApiResource;
+        this.savingsAccountRepository = savingsAccountRepository; 
+        this.appUserReadPlatformServiceImpl = appUserReadPlatformServiceImpl;
+        this.notificationWritePlatformService = notificationWritePlatformService;
+        this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
     }
 
     @Transactional
@@ -217,7 +287,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         if (amountForDeposit.isGreaterThanZero()) {
             boolean isAccountTransfer = false;
             this.savingsAccountDomainService.handleDeposit(account, fmt, account.getActivationLocalDate(), amountForDeposit.getAmount(),
-                    null, isAccountTransfer, isRegularTransaction);
+                    null, isAccountTransfer, isRegularTransaction, false);
             updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
         }
         account.processAccountUponActivation(isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, user);
@@ -250,15 +320,21 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
         boolean isAccountTransfer = false;
         boolean isRegularTransaction = true;
+        boolean isTopup = false;
+        if(command.getProductId() != null &&
+        			command.getProductId().equals(account.productId())) {
+            	isTopup = true;
+        }
+        
         final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(account, fmt, transactionDate,
-                transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction);
+                transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction, isTopup);
 
         final String noteText = command.stringValueOfParameterNamed("note");
         if (StringUtils.isNotBlank(noteText)) {
             final Note note = Note.savingsTransactionNote(account, deposit, noteText);
             this.noteRepository.save(note) ;
         }
-        
+                
         return new CommandProcessingResultBuilder() //
                 .withEntityId(deposit.getId()) //
                 .withOfficeId(account.officeId()) //
@@ -269,6 +345,161 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 .build();
        
     }
+    
+    @Transactional
+    @Override
+    public CommandProcessingResult topup(final Long savingsId, final JsonCommand command) {
+
+        this.context.authenticatedUser();
+
+        String transaction = null;
+		SavingsAccount savingsAccount = null;
+		SavingsAccount odSavingsAccount = null;
+		Gson gson = new Gson();
+		String apiRequestBodyAsJson = command.json();
+		Long clientId = command.getClientId();
+		Long userId = null;
+		Long appUserId = null;
+		Page<SavingsAccountTransactionData> savingsAccountTransactionData = null;
+
+		Collection<AppUserData>  appUserDatas = appUserReadPlatformServiceImpl.getAgnetUserByClientId(clientId);
+		if(!appUserDatas.isEmpty()) {
+			for(AppUserData appUserData : appUserDatas) {
+				userId = appUserData.getId();
+				appUserId = new Long(AppUserTypes.fromInt(appUserData.getUserType().getId().intValue()).getValue());
+				
+			}
+		}
+		List<SavingsAccount> savingsAccounts = this.savingsAccountRepository.findSavingAccountByClientId(clientId);
+
+		for (SavingsAccount account : savingsAccounts) {
+			String savingsUrl = HttpConnectionTemplate.createDefaultBootUrl("/savingsAccountDetails/retrieveAllAccount/"+account.getId());
+			String accountDetails = HttpConnectionTemplate.restTemplateForGetMethod(savingsUrl, HttpMethod.GET);
+			if(!accountDetails.equals(null) &&
+					!accountDetails.equals("null")) {
+				JsonObject accountJsonObject = gson.fromJson(accountDetails, JsonObject.class);
+				Integer accountType = accountJsonObject.get("accountType").getAsInt();				
+				if(accountType == SavingsAccountTypeEnum.SAVINGSACCOUNT.getValue()){
+					savingsAccount = account;
+				}else if(accountType == SavingsAccountTypeEnum.ODACCOUNT.getValue()){
+					odSavingsAccount = account;
+				}
+			}
+		}
+
+		if(savingsAccount != null) {
+			savingsAccountTransactionData = savingsAccountReadPlatformService.retrieveTransactionByCreteria(null, savingsId);
+			
+			JsonElement apiRequestBodyAsJsonElement = this.fromApiJsonHelper.parse(apiRequestBodyAsJson);
+			BigDecimal transactionAmount = this.fromApiJsonHelper.extractBigDecimalNamed("transactionAmount", apiRequestBodyAsJsonElement, Locale.ENGLISH);
+			String transactionDate = this.fromApiJsonHelper.extractStringNamed("transactionDate", apiRequestBodyAsJsonElement);
+			
+			if(odSavingsAccount != null) {
+				JsonObject createODAccountJson = new JsonObject();
+				BigDecimal odAccountBalance = odSavingsAccount.getAccountBalanceDerived().abs();
+				
+				if(odAccountBalance.compareTo(BigDecimal.ZERO) != 0) {					
+					JsonObject newelement=gson.fromJson(apiRequestBodyAsJsonElement, JsonObject.class);
+					JsonElement newlocationelement=newelement.get("location");
+					createODAccountJson.addProperty("transactionDate", transactionDate.toString());
+					createODAccountJson.addProperty("locale", "en");
+					createODAccountJson.addProperty("dateFormat", "dd MMMM yyyy");
+					createODAccountJson.add("location",newlocationelement );
+					
+					if(odAccountBalance.compareTo(transactionAmount) == 1 ||
+							odAccountBalance.compareTo(transactionAmount) == 0) {
+						createODAccountJson.addProperty("transactionAmount", transactionAmount);
+						transactionAmount = BigDecimal.ZERO;
+					}else {
+						createODAccountJson.addProperty("transactionAmount", odAccountBalance);
+						transactionAmount = transactionAmount.subtract(odAccountBalance).abs();
+					}
+					
+					transaction = this.savingsAccountTransactionsApiResource.transaction(odSavingsAccount.getId(), "deposit", createODAccountJson.toString());
+					
+					if(command.entityId() == null) {
+						accountDeposit(transaction, savingsAccount.getId(), clientId, userId, null, SavingsTransactionDetailsTypeEnum.ODDEPOSIT.getValue(),
+								userId, appUserId, appUserId,apiRequestBodyAsJson);
+					}
+					
+				}
+			}
+			
+			if (transactionAmount.doubleValue() > 0) {
+				JsonObject createSavingsAccountJson = new JsonObject();				
+				JsonObject newelement=gson.fromJson(apiRequestBodyAsJsonElement, JsonObject.class);
+				JsonElement newlocationelement=newelement.get("location");
+				
+				createSavingsAccountJson.addProperty("transactionDate", transactionDate);
+				createSavingsAccountJson.addProperty("transactionAmount", transactionAmount);
+				createSavingsAccountJson.addProperty("locale", "en");
+				createSavingsAccountJson.addProperty("dateFormat", "dd MMMM yyyy");
+				createSavingsAccountJson.add("location",newlocationelement );
+			
+				transaction = this.savingsAccountTransactionsApiResource.transactionTopup(savingsAccount.getId(), "deposit", createSavingsAccountJson.toString(), savingsAccount.productId());
+				if(command.entityId() == null) {
+					accountDeposit(transaction, savingsAccount.getId(), clientId, userId, null, SavingsTransactionDetailsTypeEnum.TOPUP.getValue(),
+							userId, appUserId, appUserId,apiRequestBodyAsJson);
+				}
+			}
+		}		
+        
+		
+        if(transaction != null) {
+        	JsonElement transactionJsonElement = this.fromApiJsonHelper.parse(transaction);
+        	clientId = this.fromApiJsonHelper.extractLongNamed("clientId", transactionJsonElement);
+        }
+
+        if(command.entityId() == null) {
+        	String getURL = HttpConnectionTemplate.createDefaultBootUrl("/agentUser/agentret?userId=" + userId + "");
+  			 String agentDetails = HttpConnectionTemplate.restTemplateForGetMethod(getURL, HttpMethod.GET);
+   			 String mobileNo = fromApiJsonHelper.extractStringNamed("mobileNo", fromApiJsonHelper.parse(agentDetails));	
+        	if(!savingsAccountTransactionData.getPageItems().isEmpty()) {
+	   			 PushNotification.createPushNotification(NotificationMessage.topupContent, NotificationMessage.topupHeader, "userMobile", mobileNo);    		
+	   			 notificationWritePlatformService.notify(userId, "agent", null, "topupApproved", null, "Topup approved successfully.", false);
+        	}else {
+   			 	PushNotification.createPushNotification(NotificationMessage.firstTimeTopupContent, NotificationMessage.firstTimeTopupHeader, 
+   			 			"userMobile", mobileNo);    		
+   			 	notificationWritePlatformService.notify(userId, "agent", null, "topupApproved", null, NotificationMessage.firstTimeTopupContent, false);
+        	}
+        	 
+		}
+        
+		return new CommandProcessingResultBuilder() //
+                .withClientId(clientId) //
+                .withSavingsId(savingsId) //
+                .build();
+    }
+
+	public void accountDeposit(String transaction, Long savingsId, Long clientId, Long agentId, String uriInfo, Integer transactionType,
+			Long toUserId, Long userTypeId, Long toUserTypeId,String json) {
+		if(transaction != null) {
+			JsonElement transactionJsonCommand = fromApiJsonHelper.parse(transaction);
+			JsonObject transactionJsonObject =  new JsonObject();
+			
+			JsonElement element = this.fromApiJsonHelper.parse(json);
+			Gson gson=new Gson();
+			JsonObject newelement=gson.fromJson(element, JsonObject.class);
+			JsonElement newlocationelement=newelement.get("location");
+			
+			transactionJsonObject.addProperty("savingsId", savingsId);
+			transactionJsonObject.addProperty("clientId", clientId);
+			transactionJsonObject.addProperty("userId", agentId);
+			transactionJsonObject.addProperty("transactionType", transactionType);
+			transactionJsonObject.addProperty("locale", "en");
+			transactionJsonObject.addProperty("transactionId", fromApiJsonHelper.extractLongNamed("resourceId",transactionJsonCommand));
+			transactionJsonObject.addProperty("toUserId", toUserId);
+			transactionJsonObject.addProperty("userTypeId", userTypeId);
+			transactionJsonObject.addProperty("toUserTypeId", toUserTypeId);
+			transactionJsonObject.add("location",newlocationelement );
+
+			if(transactionJsonObject !=null) {
+				String transactionUrl = HttpConnectionTemplate.createDefaultBootUrl("/accountTransaction/createTransaction");
+				HttpConnectionTemplate.restTemplate(transactionUrl, transactionJsonObject.toString(), HttpMethod.POST);
+			}
+		}
+	}
+   
 
     private Long saveTransactionToGenerateTransactionId(final SavingsAccountTransaction transaction) {
         this.savingsAccountTransactionRepository.saveAndFlush(transaction);
@@ -354,7 +585,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         boolean isInterestTransfer = false;
         final LocalDate postInterestOnDate = null;
         account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                financialYearBeginningMonth, postInterestOnDate);
+                financialYearBeginningMonth, postInterestOnDate, null, false);
 
         this.savingAccountRepositoryWrapper.save(account);
 
@@ -434,12 +665,56 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 }
             }
 
-            this.savingAccountRepositoryWrapper.saveAndFlush(account);
+            Long productId = new Long(1);
+        	if(account.productId().equals(productId)) {
+        		 account.getSummary().setAccountBalance(account.getAccountBalanceDerived());
+        	}
+        	this.savingAccountRepositoryWrapper.saveAndFlush(account);
 
             postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
         }
     }
 
+    @Transactional
+    @Override
+    public void postInterestTopup(final SavingsAccount account, final boolean postInterestAs, final LocalDate transactionDate, 
+    		List<SavingsAccountTransaction> transaction) {
+
+        final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
+                .isSavingsInterestPostingAtCurrentPeriodEnd();
+        final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
+        if (account.getNominalAnnualInterestRate().compareTo(BigDecimal.ZERO) > 0
+                || (account.allowOverdraft() && account.getNominalAnnualInterestRateOverdraft().compareTo(BigDecimal.ZERO) > 0)) {
+            final Set<Long> existingTransactionIds = new HashSet<>();
+            final Set<Long> existingReversedTransactionIds = new HashSet<>();
+            updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
+            final LocalDate today = DateUtils.getLocalDateOfTenant();
+            final MathContext mc = new MathContext(10, MoneyHelper.getRoundingMode());
+            boolean isInterestTransfer = false;
+            LocalDate postInterestOnDate = null;
+            if (postInterestAs) {
+                postInterestOnDate = transactionDate;
+            }
+            account.postInterestTopup(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth,
+                    postInterestOnDate);
+            // for generating transaction id's
+           /* List<SavingsAccountTransaction> transactions = account.getTransactions();
+            for (SavingsAccountTransaction accountTransaction : transactions) {
+                if (accountTransaction.getId() == null) {
+                    this.savingsAccountTransactionRepository.save(accountTransaction);
+                }
+            }
+*/  
+            /*account.getSummary().setAccountBalance(null);
+            account.getSummary().setTotalDeposits(null);*/
+            account.setTransaction(transaction);
+            account.getSummary().setAccountBalance(account.getAccountBalanceDerived());
+            this.savingAccountRepositoryWrapper.saveAndFlush(account);
+
+           // postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
+      }
+    }
+    
     @Override
     public CommandProcessingResult undoTransaction(final Long savingsId, final Long transactionId,
             final boolean allowAccountTransferModification) {
@@ -493,7 +768,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                     postInterestOnDate);
         } else {
             account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                    financialYearBeginningMonth, postInterestOnDate);
+                    financialYearBeginningMonth, postInterestOnDate, null, false);
         }
         List<DepositAccountOnHoldTransaction> depositAccountOnHoldTransactions = null;
         if (account.getOnHoldFunds().compareTo(BigDecimal.ZERO) == 1) {
@@ -585,7 +860,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                     postInterestOnDate);
         } else {
             account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                    financialYearBeginningMonth, postInterestOnDate);
+                    financialYearBeginningMonth, postInterestOnDate, null, false);
         }
         List<DepositAccountOnHoldTransaction> depositAccountOnHoldTransactions = null;
         if (account.getOnHoldFunds().compareTo(BigDecimal.ZERO) == 1) {
@@ -734,7 +1009,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         boolean isInterestTransfer = false;
         LocalDate postInterestOnDate = null;
         savingsAccount.calculateInterestUsing(mc, transferDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                financialYearBeginningMonth, postInterestOnDate);
+                financialYearBeginningMonth, postInterestOnDate, null, false);
 
         this.savingsAccountTransactionRepository.save(newTransferTransaction);
         this.savingAccountRepositoryWrapper.saveAndFlush(savingsAccount);
@@ -765,7 +1040,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         boolean isInterestTransfer = false;
         LocalDate postInterestOnDate = null;
         savingsAccount.calculateInterestUsing(mc, transferDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                financialYearBeginningMonth, postInterestOnDate);
+                financialYearBeginningMonth, postInterestOnDate, null, false);
 
         this.savingsAccountTransactionRepository.save(withdrawtransferTransaction);
         this.savingAccountRepositoryWrapper.saveAndFlush(savingsAccount);
@@ -807,7 +1082,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final MathContext mc = MathContext.DECIMAL64;
         LocalDate postInterestOnDate = null;
         savingsAccount.calculateInterestUsing(mc, transferDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                financialYearBeginningMonth, postInterestOnDate);
+                financialYearBeginningMonth, postInterestOnDate, null, false);
 
         this.savingsAccountTransactionRepository.save(acceptTransferTransaction);
         this.savingAccountRepositoryWrapper.saveAndFlush(savingsAccount);
@@ -964,7 +1239,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         } else {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                    financialYearBeginningMonth, postInterestOnDate);
+                    financialYearBeginningMonth, postInterestOnDate, null, false);
         }
         List<DepositAccountOnHoldTransaction> depositAccountOnHoldTransactions = null;
         if (account.getOnHoldFunds().compareTo(BigDecimal.ZERO) == 1) {
@@ -1097,7 +1372,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         } else {
             final LocalDate today = DateUtils.getLocalDateOfTenant();
             account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                    financialYearBeginningMonth, postInterestOnDate);
+                    financialYearBeginningMonth, postInterestOnDate, null, false);
         }
         List<DepositAccountOnHoldTransaction> depositAccountOnHoldTransactions = null;
         if (account.getOnHoldFunds().compareTo(BigDecimal.ZERO) == 1) {

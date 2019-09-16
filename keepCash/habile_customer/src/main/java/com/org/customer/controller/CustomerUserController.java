@@ -1,13 +1,9 @@
 package com.org.customer.controller;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,11 +26,12 @@ import com.org.customer.command.FromJsonHelper;
 import com.org.customer.command.api.JsonCommand;
 import com.org.customer.command.service.CommandWrapperBuilder;
 import com.org.customer.core.data.EnumOptionData;
+import com.org.customer.core.service.Page;
+import com.org.customer.core.service.SearchParameters;
 import com.org.customer.data.CustomerDataValidator;
 import com.org.customer.data.CustomerUserData;
-import com.org.customer.exception.ContentManagementException;
-import com.org.customer.exception.ForcePasswordResetException;
 import com.org.customer.model.AppUserTypes;
+import com.org.customer.service.CustomerUserReadService;
 import com.org.customer.service.CustomerUserService;
 import com.org.customer.service.implementation.AppUserTypesEnumerations;
 
@@ -47,16 +44,19 @@ public class CustomerUserController {
 	private final CustomerUserService customerUserServiceImpl;
 	private final FromJsonHelper fromApiJsonHelper;
 	private final CustomerDataValidator customerDataValidator;
+	private final CustomerUserReadService customerUserReadService;
 
-	public CustomerUserController(final CustomerUserService customerUserServiceImpl, final FromJsonHelper fromJsonHelper, final CustomerDataValidator customerDataValidator) {
+	public CustomerUserController(final CustomerUserService customerUserServiceImpl, final FromJsonHelper fromJsonHelper, 
+			final CustomerDataValidator customerDataValidator, final CustomerUserReadService customerUserReadService) {
 		this.customerUserServiceImpl = customerUserServiceImpl;
 		this.fromApiJsonHelper = fromJsonHelper;
 		this.customerDataValidator = customerDataValidator;
+		this.customerUserReadService = customerUserReadService;
 	}
-	mv info.txt config/information.txt
 
 	@PostMapping(path = "/customerCreate/{parent_user_id}", produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON)
-	public String create(@RequestParam Long userId,@PathVariable("parent_user_id") Long agentId, @RequestBody final String apiRequestBodyAsJson) {
+	public String create(@RequestParam Long userId,@PathVariable("parent_user_id") Long agentId, @RequestBody final String apiRequestBodyAsJson,
+			@RequestParam("transactionPin") final Integer transactionPin) {
 		final CommandWrapper wrapper = new CommandWrapperBuilder() //
 				.withJson(apiRequestBodyAsJson) //
 				.build(); //
@@ -77,9 +77,14 @@ public class CustomerUserController {
     		return errorMessage;
     	}
     	
-		final CommandProcessingResult result = customerUserServiceImpl.createCustomer(command, userId,agentId);
+		final CommandProcessingResult result = customerUserServiceImpl.createCustomer(command, userId,agentId,  transactionPin);
 		return this.fromApiJsonHelper.toJson(result);
 	}
+	
+	public static String randomAuthorizationTokenGeneration() {
+        Integer randomPIN = (int) (Math.random() * 9000) + 1000;
+        return randomPIN.toString();
+    }
 
 	@GetMapping(path = "/customerretrieve", produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON)
 	public String retrieve(@RequestParam Long custUserId) {
@@ -87,6 +92,27 @@ public class CustomerUserController {
 		return this.fromApiJsonHelper.toJson(CustomerData);
 	}
 	
+	
+	@GetMapping(path = "/customerRetrieveAll", produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON)
+    public String retrieveAllCustomer(@QueryParam("sqlSearch") final String sqlSearch,
+    		@RequestParam("mobileNumber") String mobileNumber,
+            @QueryParam("offset") final Integer offset, @QueryParam("limit") final Integer limit,
+            @QueryParam("orderBy") final String orderBy, @QueryParam("sortOrder") final String sortOrder) {
+
+        return this.retrieveAll( sqlSearch, mobileNumber, offset, limit, orderBy, sortOrder);
+    }
+    
+    public String retrieveAll(final String sqlSearch,final String mobileNo,
+            final Integer offset, final Integer limit, final String orderBy, final String sortOrder) {
+
+        final SearchParameters searchParameters = SearchParameters.forCustomerUser(sqlSearch, null, null, mobileNo, null, 
+        		offset, limit, orderBy, sortOrder);
+        final Page<CustomerUserData> customerUserData = this.customerUserReadService.retrieveAllCustomers(searchParameters);        
+		
+		return this.fromApiJsonHelper.toJson(customerUserData);
+
+        
+    }
 
 	@PostMapping(path = "/updateClientInCustomer", produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON)
 	public CommandProcessingResult updateClientInCustomerDetails(@RequestParam Long userId, @RequestBody final String apiRequestBodyAsJson) {
@@ -170,8 +196,6 @@ public class CustomerUserController {
             wrapper.getSubentityId(), wrapper.getGroupId(), wrapper.getClientId(), wrapper.getLoanId(), wrapper.getSavingsId(),
             wrapper.getTransactionId(), wrapper.getHref(), wrapper.getProductId(),wrapper.getCreditBureauId(),wrapper.getOrganisationCreditBureauId());
      
- 
-    	//this.customerDataValidator.validateForUpdateCustomerUser(apiRequestBodyAsJson);
     	String errorMessage = customerDataValidator.validateForUpdateCustomerUser(apiRequestBodyAsJson);
     	if(errorMessage != null) {
     		return errorMessage;

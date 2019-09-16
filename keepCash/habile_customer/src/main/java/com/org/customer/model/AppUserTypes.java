@@ -4,7 +4,7 @@ package com.org.customer.model;
 public enum AppUserTypes {
 
 	AGENT(1, "legalFormType.agent"),
-	DELEGATE(2, "legalFormType.delegate"),
+	EMPLOYEE(2, "legalFormType.delegate"),
 	CUSTOMER(3, "legalFormType.customer");
 	
 	private final Integer value;
@@ -31,7 +31,7 @@ public enum AppUserTypes {
             	appUserType = AppUserTypes.AGENT;
             break;
             case 2:
-            	appUserType = AppUserTypes.DELEGATE;
+            	appUserType = AppUserTypes.EMPLOYEE;
             break;
             case 3:
             	appUserType = AppUserTypes.CUSTOMER;
@@ -44,8 +44,8 @@ public enum AppUserTypes {
         return this.value.equals(AppUserTypes.AGENT.getValue());
     }
     
-    public boolean isDelegate() {
-        return this.value.equals(AppUserTypes.DELEGATE.getValue());
+    public boolean isEmployee() {
+        return this.value.equals(AppUserTypes.EMPLOYEE.getValue());
     }
     
     public boolean isCustomer() {

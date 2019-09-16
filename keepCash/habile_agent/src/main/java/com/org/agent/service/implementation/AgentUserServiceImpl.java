@@ -2,25 +2,29 @@ package com.org.agent.service.implementation;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.google.gson.JsonElement;
 import com.org.agent.command.CommandProcessingResult;
 import com.org.agent.command.CommandProcessingResultBuilder;
+import com.org.agent.command.FromJsonHelper;
 import com.org.agent.command.api.JsonCommand;
 import com.org.agent.controller.AgentConstants;
 import com.org.agent.data.AgentUserData;
 import com.org.agent.model.AgentSavingsAccount;
 import com.org.agent.model.AgentUserEntity;
+import com.org.agent.model.AppUser;
 import com.org.agent.repository.AgentSavingsAccountRepository;
 import com.org.agent.repository.AgentUserRepository;
 import com.org.agent.repository.AppUserRepository;
 import com.org.agent.service.AgentUserService;
-import com.org.agent.controller.AgentConstants;
-import com.org.agent.model.AppUser;
-import com.org.agent.model.AgentUserEntity;
+
+
+
 
 @Component
 public class AgentUserServiceImpl implements AgentUserService {
@@ -29,21 +33,41 @@ public class AgentUserServiceImpl implements AgentUserService {
 	private final AppUserRepository appUserRepository;
 	private final AppUserServiceImpl appUserServiceImpl;
 	private final AgentSavingsAccountRepository agentSavingsAccountRepository;
+	private final FromJsonHelper fromApiJsonHelper;
+
 
 	@Autowired
 	public AgentUserServiceImpl(final AgentUserRepository agentUserRepository,
 			final AppUserRepository appUserRepository, final AppUserServiceImpl appUserServiceImpl,
-			final AgentSavingsAccountRepository agentSavingsAccountRepository) {
+			final AgentSavingsAccountRepository agentSavingsAccountRepository,final FromJsonHelper fromJsonHelper) {
 		this.agentUserRepository = agentUserRepository;
 		this.appUserRepository = appUserRepository;
 		this.appUserServiceImpl = appUserServiceImpl;
 		this.agentSavingsAccountRepository = agentSavingsAccountRepository;
+		this.fromApiJsonHelper = fromJsonHelper;
 	}
 
 	@Override
-	public CommandProcessingResult createAgent(JsonCommand command, Long appUserId, Long parentUserId) {
+	public CommandProcessingResult createAgent(JsonCommand command, Long appUserId, Long parentUserId, Integer transactionPin) {
+		JsonElement element = command.jsonElement("location");
 		final AgentUserEntity agentUser = AgentUserEntity.createAgentUserEntity(command, appUserServiceImpl.findByIdAppUser(appUserId)
-				, appUserServiceImpl.findByIdAppUser(parentUserId));
+				, appUserServiceImpl.findByIdAppUser(parentUserId), transactionPin);
+		if(element != null) {
+			String latitude =fromApiJsonHelper.extractStringNamed(AgentConstants.latitudeParamName, element);
+	        String longitude = fromApiJsonHelper.extractStringNamed(AgentConstants.longitudeParamName, element);
+			String locationName = fromApiJsonHelper.extractStringNamed(AgentConstants.locationNameParamName, element);
+			String locationAddress = fromApiJsonHelper.extractStringNamed(AgentConstants.locationAddressParamName, element);
+			String ipAddress = fromApiJsonHelper.extractStringNamed(AgentConstants.ipAddressParamName, element);
+			String deviceId = fromApiJsonHelper.extractStringNamed(AgentConstants.deviceIdParamName, element);
+			agentUser.setLatitude(latitude);
+			agentUser.setLongitude(longitude);
+			agentUser.setLocationName(locationName);
+			agentUser.setLocationAddress(locationAddress);
+			agentUser.setIpAddress(ipAddress);
+			agentUser.setDeviceId(deviceId);
+			agentUser.setTransactionPin(transactionPin);
+		}
+		  	
 		agentUserRepository.save(agentUser);
 		
 		return new CommandProcessingResultBuilder()
@@ -55,6 +79,12 @@ public class AgentUserServiceImpl implements AgentUserService {
 	public AgentUserData retrieveAgent(final Long Id) {
 		final AgentUserData agentUser = AgentUserReadServiceImpl.retrieveAgentUserEntity(Id);
 		return agentUser;
+	}
+	
+	@Override
+	public Collection<AgentUserData> retrieveAllAgents() {
+		final Collection<AgentUserData> agentUsers = AgentUserReadServiceImpl.getAllAgentUser();
+		return agentUsers;
 	}
 	
 	@Override
@@ -114,9 +144,9 @@ public class AgentUserServiceImpl implements AgentUserService {
 		
 		//final CustomerUserEntity customerUser = CustomerUserEntity.updateCustomerUserEntity(changes,data,appUser);
 			/*	appUserServiceImpl.findByIdAppUser(userId));*/
-		final AgentUserEntity customerUser =updateCustomerUserEntity(changes,agentUserOldData,appUser, command);
+		final AgentUserEntity agentUser =updateAgentUserEntity(changes,agentUserOldData,appUser, command);
 
-		agentUserRepository.save(customerUser);
+		agentUserRepository.save(agentUser);
 
 		return new CommandProcessingResultBuilder()
 				.withCommandId(command.commandId())
@@ -128,8 +158,7 @@ public class AgentUserServiceImpl implements AgentUserService {
 		
 	}
 	
-	public AgentUserEntity updateCustomerUserEntity(Map<String, Object> changes,AgentUserEntity oldData,AppUser appUser,JsonCommand command)
-	{
+	public AgentUserEntity updateAgentUserEntity(Map<String, Object> changes,AgentUserEntity oldData,AppUser appUser,JsonCommand command){
 		AgentUserEntity customerUserDataAfterChanges=oldData;
 		if (changes.containsKey(AgentConstants.companyNameParamName)) {
 			final String newValue = command.stringValueOfParameterNamed(AgentConstants.companyNameParamName);
@@ -211,6 +240,32 @@ public class AgentUserServiceImpl implements AgentUserService {
                 newimageEncryption = command.stringValueOfParameterNamed(AgentConstants.imageEncryptionParamName);
             }
             customerUserDataAfterChanges.setImageEncryption(newimageEncryption);
+		}
+		if (changes.containsKey(AgentConstants.employeeIdParamName)) {
+			final Long newValue = command.longValueOfParameterNamed(AgentConstants.employeeIdParamName);
+            Long newEmployeeId = null;
+            if (newValue != null) {
+            	newEmployeeId = command.longValueOfParameterNamed(AgentConstants.employeeIdParamName);
+            }
+            customerUserDataAfterChanges.setEmployeeId(newEmployeeId);
+		}
+		
+		if (changes.containsKey(AgentConstants.faceUniqueIdParamName)) {
+			final String newValue = command.stringValueOfParameterNamed(AgentConstants.faceUniqueIdParamName);
+            String faceUniqueId = null;
+            if (newValue != null) {
+            	faceUniqueId = command.stringValueOfParameterNamed(AgentConstants.faceUniqueIdParamName);
+            }
+            customerUserDataAfterChanges.setFaceUniqueId(faceUniqueId);
+		}
+		
+		if (changes.containsKey(AgentConstants.statusParamName)) {
+			final Integer newValue = command.integerValueOfParameterNamed(AgentConstants.statusParamName, Locale.ENGLISH);
+            Integer status = null;
+            if (newValue != null) {
+            	status = command.integerValueOfParameterNamed(AgentConstants.statusParamName, Locale.ENGLISH);
+            }
+            customerUserDataAfterChanges.setStatus(status);
 		}
 		
 		return customerUserDataAfterChanges;

@@ -1,10 +1,12 @@
 package com.org.agent.controller;
 
 
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -18,19 +20,6 @@ import com.org.agent.command.CommandWrapper;
 import com.org.agent.command.FromJsonHelper;
 import com.org.agent.command.api.JsonCommand;
 import com.org.agent.command.service.CommandWrapperBuilder;
-import com.org.agent.web.Example;
-import com.org.agent.web.Ssl;
-
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-
-import javax.xml.namespace.QName;
-import javax.xml.ws.Service;
 
 @RestController
 @RequestMapping("/agentDetails")

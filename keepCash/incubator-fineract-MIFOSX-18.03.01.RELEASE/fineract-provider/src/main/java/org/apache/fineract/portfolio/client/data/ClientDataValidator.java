@@ -295,9 +295,12 @@ public final class ClientDataValidator {
         baseDataValidator.reset().parameter(ClientApiConstants.middlenameParamName).value(middlenameParam).ignoreIfNull()
                 .notExceedingLengthOf(50);
 
-        final String lastnameParamName = this.fromApiJsonHelper.extractStringNamed(ClientApiConstants.lastnameParamName, element);
-        baseDataValidator.reset().parameter(ClientApiConstants.lastnameParamName).value(lastnameParamName).notBlank()
-                .notExceedingLengthOf(50);
+        if(this.fromApiJsonHelper.extractStringNamed(ClientApiConstants.lastnameParamName, element) != null) {
+        	   final String lastnameParamName = this.fromApiJsonHelper.extractStringNamed(ClientApiConstants.lastnameParamName, element);
+               baseDataValidator.reset().parameter(ClientApiConstants.lastnameParamName).value(lastnameParamName).notBlank()
+                       .notExceedingLengthOf(50);
+        }
+     
     }
 
     private void fullnameCannotBeBlank(final JsonElement element, final DataValidatorBuilder baseDataValidator) {
@@ -492,10 +495,10 @@ public final class ClientDataValidator {
         Map<String, Object> parameterUpdateStatusDetails = getParameterUpdateStatusAndDataValidationErrorsForUpdateOnClientNonPerson(element.getAsJsonObject().get(ClientApiConstants.clientNonPersonDetailsParamName));
         boolean atLeastOneParameterPassedForClientNonPersonUpdate = (boolean) parameterUpdateStatusDetails.get("parameterUpdateStatus");
                
-        if (!atLeastOneParameterPassedForUpdate && !atLeastOneParameterPassedForClientNonPersonUpdate) {
+      /*  if (!atLeastOneParameterPassedForUpdate && !atLeastOneParameterPassedForClientNonPersonUpdate) {
             final Object forceError = null;
             baseDataValidator.reset().anyOfNotNull(forceError);
-        }
+        }*/
         
         @SuppressWarnings("unchecked")
 		List<ApiParameterError> dataValidationErrorsForClientNonPerson = (List<ApiParameterError>) parameterUpdateStatusDetails.get("dataValidationErrors");        

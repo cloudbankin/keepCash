@@ -1235,6 +1235,26 @@ public class CommandWrapperBuilder {
         this.href = "/savingsaccounts/" + accountId + "/transactions";
         return this;
     }
+    
+    public CommandWrapperBuilder savingsAccountDepositTopup(final Long accountId, final Long productId) {
+        this.actionName = "DEPOSIT";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = null;
+        this.href = "/savingsaccounts/" + accountId + "/transactions";
+        this.productId = productId;
+        return this;
+    }
+    
+    public CommandWrapperBuilder agentSavingsAccountDeposit(final Long accountId, final Long userId, final Long clientId) {
+        this.actionName = "TOPUP";
+        this.entityName = "AGENTSAVINGSACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = userId;
+        this.clientId = clientId;
+        this.href = "/savingsaccounts/" + accountId + "/transactions";
+        return this;
+    }
 
     public CommandWrapperBuilder savingsAccountWithdrawal(final Long accountId) {
         this.actionName = "WITHDRAWAL";

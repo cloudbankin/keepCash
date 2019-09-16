@@ -19,6 +19,8 @@
 package org.apache.fineract.infrastructure.core.service;
 
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.LocalDate;
+
 
 public final class SearchParameters {
 
@@ -48,6 +50,13 @@ public final class SearchParameters {
     private final Long productId;
     private final Long categoryId;
     private final boolean isSelfUser;
+    
+    private final LocalDate startDate;
+    private final LocalDate endDate;
+    private final LocalDate currentDate;
+    private final Integer transactionType;
+    private final boolean isRating;
+    private final Long userId;
 
     public static SearchParameters from(final String sqlSearch, final Long officeId, final String externalId, final String name,
             final String hierarchy) {
@@ -239,6 +248,17 @@ public final class SearchParameters {
         return new SearchParameters(sqlSearch, null, externalId, null, null, null, null, offset, maxLimitAllowed, orderBy, sortOrder,
                 staffId, accountNo, loanId, savingsId, orphansOnly, isSelfUser);
     }
+    
+    public static SearchParameters forTransaction(final String sqlSearch, final Long savingsId, final LocalDate startDate, final LocalDate endDate,
+    		final LocalDate currentDate, final Integer transactionType, final Integer offset, final Integer limit, final String orderBy, final String sortOrder,
+    		final boolean isRating, final Long userId) {
+
+        final Integer maxLimitAllowed = getCheckedLimit(limit);
+   
+
+        return new SearchParameters(sqlSearch, savingsId, startDate, endDate, currentDate, transactionType, offset, 
+    			limit, orderBy, sortOrder, isRating, userId);
+    }
 	
     private SearchParameters(final String sqlSearch, final Long officeId, final String externalId, final String name,
             final String hierarchy, final String firstname, final String lastname, final Integer offset, final Integer limit,
@@ -265,6 +285,12 @@ public final class SearchParameters {
         this.productId = null;
         this.categoryId = null;
         this.isSelfUser = isSelfUser;
+        this.startDate = null;
+        this.endDate = null;
+  	  	this.currentDate = null;
+  	  	this.transactionType = null;
+  	  	this.isRating = false;
+  	  	this.userId = null;
 
     }
 
@@ -291,6 +317,12 @@ public final class SearchParameters {
         this.productId = productId;
         this.categoryId = categoryId;
         this.isSelfUser = false;
+        this.startDate = null;
+        this.endDate = null;
+  	  	this.currentDate = null;
+  	  	this.transactionType = null;
+  	  	this.isRating = false;
+  	  	this.userId = null;
 
     }
 
@@ -319,9 +351,49 @@ public final class SearchParameters {
         this.productId = null;
         this.categoryId = null;
         this.isSelfUser = false;
+        this.startDate = null;
+        this.endDate = null;
+  	  	this.currentDate = null;
+  	  	this.transactionType = null;
+  	  	this.isRating = false;
+  	  	this.userId = null;
     }
 
-    public boolean isOrderByRequested() {
+    public SearchParameters(String sqlSearch, Long savingsId, LocalDate startDate, LocalDate endDate, LocalDate currentDate, Integer transactionType,
+			Integer offset, Integer limit, String orderBy, String sortOrder, boolean isRating, Long userId) {
+
+          this.sqlSearch = null;
+          this.startDate = startDate;
+    	  this.endDate = endDate;
+    	  this.currentDate = currentDate;
+    	  this.transactionType = transactionType;
+    	  this.savingsId = savingsId;
+          this.externalId = null;
+          this.name = null;
+          this.hierarchy = null;
+          this.firstname = null;
+          this.lastname = null;
+          this.orderBy = orderBy;
+          this.sortOrder = sortOrder;
+          this.staffId = null;
+          this.accountNo = null;
+          this.loanId = null;
+          this.orphansOnly = null;
+          this.currencyCode = null;
+          this.officeId = null;
+          this.offset = offset;
+          this.limit = limit;
+          this.provisioningEntryId = null;
+          this.productId = null;
+          this.categoryId = null;
+          this.isSelfUser = false;
+          this.isRating = isRating;
+          this.userId = userId;
+        
+		
+	}
+
+	public boolean isOrderByRequested() {
         return StringUtils.isNotBlank(this.orderBy);
     }
 
@@ -474,7 +546,35 @@ public final class SearchParameters {
         return this.isSelfUser;
     }
 
-    /** 
+    public LocalDate getStartDate() {
+		return startDate;
+	}
+
+	public LocalDate getEndDate() {
+		return endDate;
+	}
+
+	public LocalDate getCurrentDate() {
+		return currentDate;
+	}
+	
+	
+
+	public boolean isRating() {
+		return isRating;
+	}
+
+	public Integer getTransactionType() {
+		return transactionType;
+	}
+
+	
+	
+	public Long getUserId() {
+		return userId;
+	}
+
+	/** 
      * creates an instance of the SearchParameters from a request for the report mailing job run history
      * 
      * @return SearchParameters object

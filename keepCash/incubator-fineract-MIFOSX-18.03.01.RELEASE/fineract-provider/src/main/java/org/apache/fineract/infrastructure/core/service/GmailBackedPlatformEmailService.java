@@ -82,7 +82,10 @@ public class GmailBackedPlatformEmailService implements PlatformEmailService {
             email.addTo(emailDetails.getAddress(), emailDetails.getContactName());
             email.send();
         } catch (EmailException e) {
-            throw new PlatformEmailSendException(e);
+        	e.printStackTrace();
+           // throw new PlatformEmailSendException(e);
         }
     }
+    
+    
 }

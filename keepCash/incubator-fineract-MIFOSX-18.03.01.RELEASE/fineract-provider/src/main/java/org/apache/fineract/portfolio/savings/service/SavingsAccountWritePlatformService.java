@@ -18,7 +18,10 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
+import java.util.List;
 import java.util.Set;
+
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
@@ -89,6 +92,8 @@ public interface SavingsAccountWritePlatformService {
 
     void postInterest(SavingsAccount account, boolean postInterestAs, LocalDate transactionDate);
     
+    void postInterestTopup(SavingsAccount account, boolean postInterestAs, LocalDate transactionDate, List<SavingsAccountTransaction> transaction);
+    
     CommandProcessingResult blockAccount(Long savingsId);
 
     CommandProcessingResult unblockAccount(Long savingsId);
@@ -104,4 +109,6 @@ public interface SavingsAccountWritePlatformService {
     CommandProcessingResult unblockDebits(Long savingsId);
 
     CommandProcessingResult releaseAmount(Long savingsId, Long transactionId);
+    
+    CommandProcessingResult topup(Long savingsId, JsonCommand command);
 }

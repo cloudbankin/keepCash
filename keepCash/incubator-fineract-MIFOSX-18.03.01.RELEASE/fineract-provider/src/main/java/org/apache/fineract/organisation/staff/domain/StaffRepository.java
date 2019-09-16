@@ -26,11 +26,15 @@ import org.springframework.data.repository.query.Param;
 public interface StaffRepository extends JpaRepository<Staff, Long>, JpaSpecificationExecutor<Staff> {
 
     public final static String FIND_BY_OFFICE_QUERY = "select s from Staff s where s.id = :id AND s.office.id = :officeId";
+    public final static String FIND_BY_MOBILE_QUERY = "select s from Staff s where  s.mobileNo = :mobileNo";
 
     /**
      * Find staff by officeid.
      */
     @Query(FIND_BY_OFFICE_QUERY)
     public Staff findByOffice(@Param("id") Long id, @Param("officeId") Long officeId);
+    
+    @Query(FIND_BY_MOBILE_QUERY)
+    public Staff findByMobile(@Param("mobileNo") String mobileNo);
 
 }

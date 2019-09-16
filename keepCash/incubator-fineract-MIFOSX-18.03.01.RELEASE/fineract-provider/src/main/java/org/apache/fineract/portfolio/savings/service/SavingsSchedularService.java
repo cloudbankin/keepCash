@@ -25,6 +25,8 @@ public interface SavingsSchedularService {
 
     void postInterestForAccounts() throws JobExecutionException;
     
+    void postInterestForAgentAccounts() throws JobExecutionException;
+    
     void updateSavingsDormancyStatus() throws JobExecutionException;
 
 }

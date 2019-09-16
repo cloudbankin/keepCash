@@ -222,6 +222,107 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         return this.paginationHelper.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(), paramList.toArray(), this.clientMapper);
     }
 
+    @Override
+     public Page<ClientData> retrieveAllAgent(final SearchParameters searchParameters, List<Long> clientIds) {
+
+         final String userOfficeHierarchy = this.context.officeHierarchy();
+         final String underHierarchySearchString = userOfficeHierarchy + "%";
+         final String appUserID = String.valueOf(context.authenticatedUser().getId());
+
+         // if (searchParameters.isScopedByOfficeHierarchy()) {
+         // this.context.validateAccessRights(searchParameters.getHierarchy());
+         // underHierarchySearchString = searchParameters.getHierarchy() + "%";
+         // }
+         List<Object> paramList = new ArrayList<>(Arrays.asList());
+         final StringBuilder sqlBuilder = new StringBuilder(200);
+         sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
+         sqlBuilder.append(this.clientMapper.schema());
+         sqlBuilder.append("left join hab_agent_user  hau on c.id = hau.client_id");
+         sqlBuilder.append(" where hau.client_id is not null group by hau.client_id");
+
+         if(searchParameters!=null) {
+             if (searchParameters.isSelfUser()) {
+                 sqlBuilder.append(" and c.id in (select umap.client_id from m_selfservice_user_client_mapping as umap where umap.appuser_id = ? ) ");
+                 paramList.add(appUserID);
+             }
+
+             final String extraCriteria = buildSqlStringFromClientCriteria(this.clientMapper.schema(), searchParameters, paramList);
+
+             if (StringUtils.isNotBlank(extraCriteria)) {
+                 sqlBuilder.append(" and (").append(extraCriteria).append(")");
+             }
+
+             if (searchParameters.isOrderByRequested()) {
+                 sqlBuilder.append(" order by ").append(searchParameters.getOrderBy());
+                 this.columnValidator.validateSqlInjection(sqlBuilder.toString(), searchParameters.getOrderBy());
+                 if (searchParameters.isSortOrderProvided()) {
+                     sqlBuilder.append(' ').append(searchParameters.getSortOrder());
+                     this.columnValidator.validateSqlInjection(sqlBuilder.toString(), searchParameters.getSortOrder());
+                 }
+             }
+
+             if (searchParameters.isLimited()) {
+                 sqlBuilder.append(" limit ").append(searchParameters.getLimit());
+                 if (searchParameters.isOffset()) {
+                     sqlBuilder.append(" offset ").append(searchParameters.getOffset());
+                 }
+             }
+         }
+         final String sqlCountRows = "SELECT FOUND_ROWS()";
+         return this.paginationHelper.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(), paramList.toArray(), this.clientMapper);
+     }
+    
+    @Override
+    public Page<ClientData> retrieveAllCustomer(final SearchParameters searchParameters) {
+
+        final String userOfficeHierarchy = this.context.officeHierarchy();
+        final String underHierarchySearchString = userOfficeHierarchy + "%";
+        final String appUserID = String.valueOf(context.authenticatedUser().getId());
+
+        // if (searchParameters.isScopedByOfficeHierarchy()) {
+        // this.context.validateAccessRights(searchParameters.getHierarchy());
+        // underHierarchySearchString = searchParameters.getHierarchy() + "%";
+        // }
+        List<Object> paramList = new ArrayList<>(Arrays.asList());
+        final StringBuilder sqlBuilder = new StringBuilder(200);
+        sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
+        sqlBuilder.append(this.clientMapper.schema());
+        sqlBuilder.append("left join hab_customer_user  hau on c.id = hau.client_id");
+        sqlBuilder.append(" where hau.client_id is not null group by hau.client_id  ");
+
+        if(searchParameters!=null) {
+            if (searchParameters.isSelfUser()) {
+                sqlBuilder.append(" and c.id in (select umap.client_id from m_selfservice_user_client_mapping as umap where umap.appuser_id = ? ) ");
+                paramList.add(appUserID);
+            }
+
+            final String extraCriteria = buildSqlStringFromClientCriteria(this.clientMapper.schema(), searchParameters, paramList);
+
+            if (StringUtils.isNotBlank(extraCriteria)) {
+                sqlBuilder.append(" and (").append(extraCriteria).append(")");
+            }
+
+            if (searchParameters.isOrderByRequested()) {
+                sqlBuilder.append(" order by ").append(searchParameters.getOrderBy());
+                this.columnValidator.validateSqlInjection(sqlBuilder.toString(), searchParameters.getOrderBy());
+                if (searchParameters.isSortOrderProvided()) {
+                    sqlBuilder.append(' ').append(searchParameters.getSortOrder());
+                    this.columnValidator.validateSqlInjection(sqlBuilder.toString(), searchParameters.getSortOrder());
+                }
+            }
+
+            if (searchParameters.isLimited()) {
+                sqlBuilder.append(" limit ").append(searchParameters.getLimit());
+                if (searchParameters.isOffset()) {
+                    sqlBuilder.append(" offset ").append(searchParameters.getOffset());
+                }
+            }
+        }
+        final String sqlCountRows = "SELECT FOUND_ROWS()";
+        return this.paginationHelper.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(), paramList.toArray(), this.clientMapper);
+    }
+
+    
     private String buildSqlStringFromClientCriteria(String schemaSql, final SearchParameters searchParameters, List<Object> paramList) {
 
         String sqlSearch = searchParameters.getSqlSearch();
@@ -544,7 +645,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
         public ClientMapper() {
             final StringBuilder builder = new StringBuilder(400);
 
-            builder.append("c.id as id, c.account_no as accountNo, c.external_id as externalId, c.status_enum as statusEnum,c.sub_status as subStatus, ");
+            builder.append("c.id as id, c.client_type_cv_id as clientTypeId,c.account_no as accountNo, c.external_id as externalId, c.status_enum as statusEnum,c.sub_status as subStatus, ");
             builder.append("cvSubStatus.code_value as subStatusValue,cvSubStatus.code_description as subStatusDesc,c.office_id as officeId, o.name as officeName, ");
             builder.append("c.transfer_to_office_id as transferToOfficeId, transferToOffice.name as transferToOfficeName, ");
             builder.append("c.firstname as firstname, c.middlename as middlename, c.lastname as lastname, ");

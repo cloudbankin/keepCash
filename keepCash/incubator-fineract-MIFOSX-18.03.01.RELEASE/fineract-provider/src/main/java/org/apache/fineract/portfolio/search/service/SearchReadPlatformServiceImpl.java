@@ -92,6 +92,14 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
                     + " , c.office_id as parentId, o.name as parentName, c.mobile_no as entityMobileNo,c.status_enum as entityStatusEnum, null as parentType "
                     + " from m_client c join m_office o on o.id = c.office_id where o.hierarchy like :hierarchy and (c.account_no like :search or c.display_name like :search or c.external_id like :search or c.mobile_no like :search)) ";
 
+            final String agentMatchSql = " (select 'CLIENT' as entityType, c.id as entityId, c.display_name as entityName, c.external_id as entityExternalId, c.account_no as entityAccountNo "
+                    + " , c.office_id as parentId, o.name as parentName, c.mobile_no as entityMobileNo,c.status_enum as entityStatusEnum, null as parentType "
+                    + " from m_client c join m_office o on o.id = c.office_id join hab_agent_user hau on c.id = hau.client_id  where o.hierarchy like :hierarchy and (c.account_no like :search or c.display_name like :search or c.external_id like :search or c.mobile_no like :search)) ";
+
+            final String customerMatchSql = " (select 'CLIENT' as entityType, c.id as entityId, c.display_name as entityName, c.external_id as entityExternalId, c.account_no as entityAccountNo "
+                    + " , c.office_id as parentId, o.name as parentName, c.mobile_no as entityMobileNo,c.status_enum as entityStatusEnum, null as parentType "
+                    + " from m_client c join m_office o on o.id = c.office_id join hab_customer_user hcu on c.id = hcu.client_id   where o.hierarchy like :hierarchy and (c.account_no like :search or c.display_name like :search or c.external_id like :search or c.mobile_no like :search)) ";            
+            
             final String loanMatchSql = " (select 'LOAN' as entityType, l.id as entityId, pl.name as entityName, l.external_id as entityExternalId, l.account_no as entityAccountNo "
                     + " , IFNULL(c.id,g.id) as parentId, IFNULL(c.display_name,g.display_name) as parentName, null as entityMobileNo, l.loan_status_id as entityStatusEnum, IF(g.id is null, 'client', 'group') as parentType "
                     + " from m_loan l left join m_client c on l.client_id = c.id left join m_group g ON l.group_id = g.id left join m_office o on o.id = c.office_id left join m_product_loan pl on pl.id=l.product_id where (o.hierarchy IS NULL OR o.hierarchy like :hierarchy) and (l.account_no like :search or l.external_id like :search)) ";
@@ -118,6 +126,14 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
 
             if (searchConditions.isClientSearch()) {
                 sql.append(clientMatchSql).append(union);
+            }
+            
+            if (searchConditions.isAgentSearch()) {
+                sql.append(agentMatchSql).append(union);
+            }
+            
+            if (searchConditions.isCustomerSearch()) {
+                sql.append(customerMatchSql).append(union);
             }
 
             if (searchConditions.isLoanSeach()) {

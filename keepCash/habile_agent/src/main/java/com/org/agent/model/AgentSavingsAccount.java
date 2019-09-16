@@ -66,7 +66,7 @@ public class AgentSavingsAccount extends AbstractPersistableCustom<Long>{
 	
 	public static AgentSavingsAccount createNew(JsonCommand command, AppUser appUser, final Integer agentSavingsAccountStatus) {
 		Date transactionDate = command.DateValueOfParameterNamed("transactionDate");
-		BigDecimal transactionAmount = BigDecimal.valueOf(Long.parseLong(command.stringValueOfParameterNamed("transactionAmount")));
+		BigDecimal transactionAmount = new BigDecimal(command.stringValueOfParameterNamed("transactionAmount"));
 		Integer paymentTypeId = command.integerValueOfParameterNamed("paymentTypeId");
 		String accountNumber = command.stringValueOfParameterNamed("accountNumber");
 		String checkNumber = command.stringValueOfParameterNamed("checkNumber");

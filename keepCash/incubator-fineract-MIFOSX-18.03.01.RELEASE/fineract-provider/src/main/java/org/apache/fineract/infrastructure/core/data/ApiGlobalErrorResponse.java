@@ -58,10 +58,12 @@ public class ApiGlobalErrorResponse {
      * parameters passed to API.
      */
     private List<ApiParameterError> errors = new ArrayList<>();
+    private String status;
 
     public static ApiGlobalErrorResponse unAuthenticated() {
 
         final ApiGlobalErrorResponse globalErrorResponse = new ApiGlobalErrorResponse();
+        globalErrorResponse.setStatus("failed");
         globalErrorResponse.setHttpStatusCode("401");
         globalErrorResponse.setDeveloperMessage("Invalid authentication details were passed in api request.");
         globalErrorResponse.setUserMessageGlobalisationCode("error.msg.not.authenticated");
@@ -73,6 +75,7 @@ public class ApiGlobalErrorResponse {
     public static ApiGlobalErrorResponse invalidTenantIdentifier() {
 
         final ApiGlobalErrorResponse globalErrorResponse = new ApiGlobalErrorResponse();
+        globalErrorResponse.setStatus("failed");
         globalErrorResponse.setHttpStatusCode("401");
         globalErrorResponse.setDeveloperMessage("Invalid tenant details were passed in api request.");
         globalErrorResponse.setUserMessageGlobalisationCode("error.msg.invalid.tenant.identifier");
@@ -83,6 +86,7 @@ public class ApiGlobalErrorResponse {
 
     public static ApiGlobalErrorResponse unAuthorized(final String defaultUserMessage) {
         final ApiGlobalErrorResponse globalErrorResponse = new ApiGlobalErrorResponse();
+        globalErrorResponse.setStatus("failed");
         globalErrorResponse.setHttpStatusCode("403");
         globalErrorResponse
                 .setDeveloperMessage("The user associated with credentials passed on this request does not have sufficient privileges to perform this action.");
@@ -99,6 +103,7 @@ public class ApiGlobalErrorResponse {
     public static ApiGlobalErrorResponse domainRuleViolation(final String globalisationMessageCode, final String defaultUserMessage,
             final Object... defaultUserMessageArgs) {
         final ApiGlobalErrorResponse globalErrorResponse = new ApiGlobalErrorResponse();
+        globalErrorResponse.setStatus("failed");
         globalErrorResponse.setHttpStatusCode("403");
         globalErrorResponse.setDeveloperMessage("Request was understood but caused a domain rule violation.");
         globalErrorResponse.setUserMessageGlobalisationCode("validation.msg.domain.rule.violation");
@@ -115,6 +120,7 @@ public class ApiGlobalErrorResponse {
             final Object... defaultUserMessageArgs) {
 
         final ApiGlobalErrorResponse globalErrorResponse = new ApiGlobalErrorResponse();
+        globalErrorResponse.setStatus("failed");
         globalErrorResponse.setHttpStatusCode("404");
         globalErrorResponse.setDeveloperMessage("The requested resource is not available.");
         globalErrorResponse.setUserMessageGlobalisationCode("error.msg.resource.not.found");
@@ -131,6 +137,7 @@ public class ApiGlobalErrorResponse {
             final String parameterName, final Object... defaultUserMessageArgs) {
 
         final ApiGlobalErrorResponse globalErrorResponse = new ApiGlobalErrorResponse();
+        globalErrorResponse.setStatus("failed");
         globalErrorResponse.setHttpStatusCode("403");
         globalErrorResponse.setDeveloperMessage("The request caused a data integrity issue to be fired by the database.");
         globalErrorResponse.setUserMessageGlobalisationCode(globalisationMessageCode);
@@ -147,6 +154,7 @@ public class ApiGlobalErrorResponse {
             final List<ApiParameterError> errors) {
 
         final ApiGlobalErrorResponse globalErrorResponse = new ApiGlobalErrorResponse();
+        globalErrorResponse.setStatus("failed");
         globalErrorResponse.setHttpStatusCode("400");
         globalErrorResponse
                 .setDeveloperMessage("The request was invalid. This typically will happen due to validation errors which are provided.");
@@ -162,6 +170,7 @@ public class ApiGlobalErrorResponse {
             final Object... defaultUserMessageArgs) {
 
         final ApiGlobalErrorResponse globalErrorResponse = new ApiGlobalErrorResponse();
+        globalErrorResponse.setStatus("failed");
         globalErrorResponse.setHttpStatusCode("500");
         globalErrorResponse.setDeveloperMessage("An unexpected error occured on the platform server.");
         globalErrorResponse.setUserMessageGlobalisationCode("error.msg.platform.server.side.error");
@@ -178,6 +187,7 @@ public class ApiGlobalErrorResponse {
             final Object... defaultUserMessageArgs) {
 
         final ApiGlobalErrorResponse globalErrorResponse = new ApiGlobalErrorResponse();
+        globalErrorResponse.setStatus("failed");
         globalErrorResponse.setHttpStatusCode("503");
         globalErrorResponse.setDeveloperMessage("The server is currently unable to handle the request , please try after some time.");
         globalErrorResponse.setUserMessageGlobalisationCode("error.msg.platform.service.unavailable");
@@ -239,4 +249,12 @@ public class ApiGlobalErrorResponse {
     public void setUserMessageGlobalisationCode(final String userMessageGlobalisationCode) {
         this.userMessageGlobalisationCode = userMessageGlobalisationCode;
     }
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
 }

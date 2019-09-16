@@ -103,4 +103,15 @@ public final class AuditData {
     public String getEntityName() {
         return this.entityName;
     }
+
+	public String getActionName() {
+		return actionName;
+	}
+
+	public Long getClientId() {
+		return clientId;
+	}
+    
+	
+    
 }

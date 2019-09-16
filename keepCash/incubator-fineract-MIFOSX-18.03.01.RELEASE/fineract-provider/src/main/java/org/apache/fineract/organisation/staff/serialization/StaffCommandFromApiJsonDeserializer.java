@@ -48,7 +48,7 @@ public final class StaffCommandFromApiJsonDeserializer {
      * The parameters supported for this command.
      */
     private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("firstname", "lastname", "officeId", "externalId",
-            "mobileNo", "isLoanOfficer", "isActive", "joiningDate", "dateFormat", "locale", "forceStatus"));
+            "mobileNo", "isLoanOfficer", "isActive", "joiningDate", "dateFormat", "locale", "forceStatus","emailAddress"));
 
     private final FromJsonHelper fromApiJsonHelper;
     
@@ -79,8 +79,10 @@ public final class StaffCommandFromApiJsonDeserializer {
         final String firstname = this.fromApiJsonHelper.extractStringNamed("firstname", element);
         baseDataValidator.reset().parameter("firstname").value(firstname).notBlank().notExceedingLengthOf(50);
 
-        final String lastname = this.fromApiJsonHelper.extractStringNamed("lastname", element);
-        baseDataValidator.reset().parameter("lastname").value(lastname).notBlank().notExceedingLengthOf(50);
+        if(this.fromApiJsonHelper.extractStringNamed("lastname", element) != null) {
+            final String lastname = this.fromApiJsonHelper.extractStringNamed("lastname", element);
+            baseDataValidator.reset().parameter("lastname").value(lastname).notBlank().notExceedingLengthOf(50);
+        }
 
         if (this.fromApiJsonHelper.parameterExists(ClientApiConstants.mobileNoParamName, element)) {
             final String mobileNo = this.fromApiJsonHelper.extractStringNamed(ClientApiConstants.mobileNoParamName, element);

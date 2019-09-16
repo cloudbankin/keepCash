@@ -121,7 +121,7 @@ public final class Client extends AbstractPersistableCustom<Long> {
 	@Column(name = "is_staff", nullable = false)
     private boolean isStaff;
 
-    @Column(name = "external_id", length = 100, nullable = true, unique = true)
+    @Column(name = "external_id", length = 100, nullable = true)
     private String externalId;
 
     @Column(name = "date_of_birth", nullable = true)
@@ -244,8 +244,8 @@ public final class Client extends AbstractPersistableCustom<Long> {
         final String firstname = command.stringValueOfParameterNamed(ClientApiConstants.firstnameParamName);
         final String middlename = command.stringValueOfParameterNamed(ClientApiConstants.middlenameParamName);
         final String lastname = command.stringValueOfParameterNamed(ClientApiConstants.lastnameParamName);
-        final String fullname = command.stringValueOfParameterNamed(ClientApiConstants.fullnameParamName);
-		
+        String fullname = command.stringValueOfParameterNamed(ClientApiConstants.fullnameParamName);
+	
 		final boolean isStaff = command.booleanPrimitiveValueOfParameterNamed(ClientApiConstants.isStaffParamName);
 
         final LocalDate dataOfBirth = command.localDateValueOfParameterNamed(ClientApiConstants.dateOfBirthParamName);
@@ -659,7 +659,7 @@ public final class Client extends AbstractPersistableCustom<Long> {
                     .notExceedingLengthOf(50);
             baseDataValidator.reset().parameter(ClientApiConstants.middlenameParamName).value(this.middlename).ignoreIfNull()
                     .notExceedingLengthOf(50);
-            baseDataValidator.reset().parameter(ClientApiConstants.lastnameParamName).value(this.lastname).notBlank()
+            baseDataValidator.reset().parameter(ClientApiConstants.lastnameParamName).value(this.lastname).ignoreIfNull()
                     .notExceedingLengthOf(50);
         }
     }

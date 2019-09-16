@@ -21,12 +21,15 @@ package org.apache.fineract.portfolio.savings.service;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.fineract.infrastructure.core.api.ApiParameterHelper;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
@@ -70,8 +73,12 @@ import org.apache.fineract.portfolio.savings.data.SavingsProductData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountSubStatusEnum;
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountNotFoundException;
+import org.apache.fineract.portfolio.springBoot.enumType.AppUserTypesEnumerations;
+import org.apache.fineract.portfolio.springBoot.enumType.SavingsAccountTypeEnum;
+import org.apache.fineract.portfolio.springBoot.enumType.SavingsTransactionDetailsTypeEnum;
 import org.apache.fineract.portfolio.tax.data.TaxGroupData;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -105,6 +112,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
     // pagination
     private final PaginationHelper<SavingsAccountData> paginationHelper = new PaginationHelper<>();
+    private final PaginationHelper<SavingsAccountTransactionData> transactionPaginationHelper = new PaginationHelper<>();
 
     private final EntityDatatableChecksReadService entityDatatableChecksReadService;
     private final ColumnValidator columnValidator;
@@ -805,16 +813,21 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, ");
             sqlBuilder.append("curr.display_symbol as currencyDisplaySymbol, ");
             sqlBuilder.append("pt.value as paymentTypeName, ");
-            sqlBuilder.append("tr.is_manual as postInterestAsOn ");
-            sqlBuilder.append("from m_savings_account sa ");
+            sqlBuilder.append("tr.is_manual as postInterestAsOn,hsd.transaction_type as transactionTypeid,  ");
+            sqlBuilder.append(" hsd.user_id as userId, hsd.to_user_id as toUserId, hsd.user_type_id as userTypeEnumId, hsd.to_user_type_id as toUserTypeEnumId, ");
+            sqlBuilder.append(" mau.firstname ");
+            sqlBuilder.append(" from m_savings_account sa ");
             sqlBuilder.append("join m_savings_account_transaction tr on tr.savings_account_id = sa.id ");
+            sqlBuilder.append("join hab_savings_transaction_details hsd on hsd.transaction_id=tr.id ");
             sqlBuilder.append("join m_currency curr on curr.code = sa.currency_code ");
             sqlBuilder.append("left join m_account_transfer_transaction fromtran on fromtran.from_savings_transaction_id = tr.id ");
             sqlBuilder.append("left join m_account_transfer_transaction totran on totran.to_savings_transaction_id = tr.id ");
             sqlBuilder.append("left join m_payment_detail pd on tr.payment_detail_id = pd.id ");
             sqlBuilder.append("left join m_payment_type pt on pd.payment_type_id = pt.id ");
             sqlBuilder.append(" left join m_appuser au on au.id=tr.appuser_id ");
+            sqlBuilder.append(" left join m_appuser mau on mau.id=hsd.to_user_id ");
             sqlBuilder.append(" left join m_note nt ON nt.savings_account_transaction_id=tr.id ") ;
+            sqlBuilder.append(" left join hab_rating hr ON hr.save_transaction_id = tr.id ") ;
             this.schemaSql = sqlBuilder.toString();
         }
 
@@ -827,9 +840,21 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final Long id = rs.getLong("transactionId");
             final int transactionTypeInt = JdbcSupport.getInteger(rs, "transactionType");
             final SavingsAccountTransactionEnumData transactionType = SavingsEnumerations.transactionType(transactionTypeInt);
-
+            final Long transactionTypeid = rs.getLong("transactionTypeid");
+            SavingsTransactionDetailsTypeEnum userType=null;
+            if(transactionTypeid!=null){
+            	userType = SavingsTransactionDetailsTypeEnum.fromInt(transactionTypeid.intValue());
+            }
+            final Long userId = rs.getLong("userId");
+            final Long toUserId = rs.getLong("toUserId");
+            final Long userTypeEnumId = rs.getLong("userTypeEnumId");
+            final Long toUserTypeEnumId = rs.getLong("toUserTypeEnumId");
+            final String firstName = rs.getString("firstname");
+            
             final LocalDate date = JdbcSupport.getLocalDate(rs, "transactionDate");
-            final LocalDate submittedOnDate = JdbcSupport.getLocalDate(rs, "submittedOnDate");
+            final Date submittedDate = rs.getTimestamp("submittedOnDate");
+            Timestamp submittedOnDate=new Timestamp(submittedDate.getTime());  
+
             final BigDecimal amount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "transactionAmount");
             final BigDecimal outstandingChargeAmount = null;
             final BigDecimal runningBalance = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "runningBalance");
@@ -889,7 +914,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             final String submittedByUsername = rs.getString("submittedByUsername");
             final String note = rs.getString("transactionNote") ;
             return SavingsAccountTransactionData.create(id, transactionType, paymentDetailData, savingsId, accountNo, date, currency,
-                    amount, outstandingChargeAmount, runningBalance, reversed, transfer, submittedOnDate, postInterestAsOn, submittedByUsername, note);
+                    amount, outstandingChargeAmount, runningBalance, reversed, transfer, submittedOnDate, postInterestAsOn, submittedByUsername,
+                    note,transactionTypeid,userType, userId, toUserId, userTypeEnumId, toUserTypeEnumId, firstName);
         }
     }
 
@@ -1220,6 +1246,88 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             throw new SavingsAccountNotFoundException(accountId);
         }
     }
+    
+    @Override
+     public Page<SavingsAccountTransactionData> retrieveTransactionByCreteria(final SearchParameters searchParameters, Long savingsId) {
+         List<Object> paramList = new ArrayList<>();
+         final StringBuilder sqlBuilder = new StringBuilder(200);
+         sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
+         sqlBuilder.append(this.transactionsMapper.schema());
+         
+         if(searchParameters != null &&
+        		 searchParameters.getTransactionType() != null) {
+        	 sqlBuilder.append(" left join hab_savings_transaction_details hstd ON hstd.transaction_id = tr.id");
+         }
+         
+         sqlBuilder.append(" where  sa.id = "+savingsId+"");
+
+         if(searchParameters!=null) {
+
+             final String extraCriteria = buildSqlStringFromTransactionCriteria(this.transactionsMapper.schema(), searchParameters, paramList);
+
+             if (StringUtils.isNotBlank(extraCriteria)) {
+                 sqlBuilder.append(" and (").append(extraCriteria).append(")");
+             }
+
+             if (searchParameters.isOrderByRequested()) {
+                 sqlBuilder.append(" order by ").append(searchParameters.getOrderBy());
+                 this.columnValidator.validateSqlInjection(sqlBuilder.toString(), searchParameters.getOrderBy());
+                 if (searchParameters.isSortOrderProvided()) {
+                     sqlBuilder.append(' ').append(searchParameters.getSortOrder());
+                     this.columnValidator.validateSqlInjection(sqlBuilder.toString(), searchParameters.getSortOrder());
+                 }
+             }
+
+             if (searchParameters.isLimited()) {
+                 sqlBuilder.append(" limit ").append(searchParameters.getLimit());
+                 if (searchParameters.isOffset()) {
+                     sqlBuilder.append(" offset ").append(searchParameters.getOffset());
+                 }
+             }
+         }
+         final String sqlCountRows = "SELECT FOUND_ROWS()";
+         return this.transactionPaginationHelper.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(), paramList.toArray(),this.transactionsMapper);
+     }
+    
+     private String buildSqlStringFromTransactionCriteria(String schemaSql, final SearchParameters searchParameters, List<Object> paramList) {
+    	 LocalDate startDate = searchParameters.getStartDate();
+    	 LocalDate endDate = searchParameters.getEndDate();
+    	 LocalDate currentDate = searchParameters.getCurrentDate();
+    	 Integer transactionType = searchParameters.getTransactionType();
+    	 boolean isRating = searchParameters.isRating();
+    	 Long userId = searchParameters.getUserId();
+    	 
+         String extraCriteria = "";
+
+         if (startDate != null && 
+        		 endDate != null) {
+             extraCriteria += " and DATE(tr.transaction_date) between '"+startDate+"' and '"+endDate+"'";
+         }
+
+         if (currentDate != null ) {
+             extraCriteria += " and tr.transaction_date = '"+currentDate+"'";
+         }
+         
+         if(transactionType != null) {
+        	 extraCriteria += " and hstd.transaction_type = "+transactionType+"";
+         }
+         
+         if(userId != null) {
+        	 extraCriteria += " and hsd.user_id = "+userId+"";
+         }
+         
+         if(isRating) {
+        	 extraCriteria += " and hr.id is null";
+         }
+      
+
+         if (StringUtils.isNotBlank(extraCriteria)) {
+             extraCriteria = extraCriteria.substring(4);
+         }
+         return extraCriteria;
+     }
+
+     
     /*
      * private static final class SavingsAccountAnnualFeeMapper implements
      * RowMapper<SavingsAccountAnnualFeeData> {

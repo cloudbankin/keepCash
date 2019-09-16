@@ -29,8 +29,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import com.org.customer.command.exception.ApiParameterError;
-import com.org.customer.command.exception.PlatformApiDataValidationException;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
@@ -42,6 +40,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.org.customer.command.exception.ApiParameterError;
+import com.org.customer.command.exception.PlatformApiDataValidationException;
 
 /**
  * Helper class to extract values of json named attributes.
@@ -611,13 +611,12 @@ public class JsonParserHelper {
                     source = source.replaceAll(" ", Character.toString('\u00a0'));
                 }
 
-                /*final NumberFormatter numberFormatter = new NumberFormatter();
-                final Number parsedNumber = numberFormatter.parse(source, clientApplicationLocale);
+                final Number parsedNumber =  NumberFormat.getNumberInstance(clientApplicationLocale).parse(numericalValueFormatted);
                 if (parsedNumber instanceof BigDecimal) {
                     number = (BigDecimal) parsedNumber;
                 } else {
                     number = BigDecimal.valueOf(Double.valueOf(parsedNumber.doubleValue()));
-                }*/
+                }
             }
 
             return number;

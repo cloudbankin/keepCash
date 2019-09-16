@@ -38,6 +38,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.google.gson.JsonObject;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
 import org.apache.fineract.commands.domain.CommandWrapper;
@@ -55,8 +56,12 @@ import org.apache.fineract.organisation.office.data.OfficeData;
 import org.apache.fineract.organisation.office.service.OfficeReadPlatformService;
 import org.apache.fineract.organisation.staff.data.StaffData;
 import org.apache.fineract.organisation.staff.service.StaffReadPlatformService;
+import org.apache.fineract.portfolio.springBoot.HttpConnectionTemplate;
+import org.apache.fineract.useradministration.data.AppUserData;
+import org.apache.fineract.useradministration.service.AppUserReadPlatformServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
 @Path("/staff")
@@ -81,6 +86,7 @@ public class StaffApiResource {
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
     private final BulkImportWorkbookService bulkImportWorkbookService;
     private final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService;
+    private final AppUserReadPlatformServiceImpl appUserReadPlatformServiceImpl;
 
 
     @Autowired
@@ -89,7 +95,8 @@ public class StaffApiResource {
             final ApiRequestParameterHelper apiRequestParameterHelper,
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
             final BulkImportWorkbookService bulkImportWorkbookService,
-            final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService) {
+            final BulkImportWorkbookPopulatorService bulkImportWorkbookPopulatorService,
+            final AppUserReadPlatformServiceImpl appUserReadPlatformServiceImpl) {
         this.context = context;
         this.readPlatformService = readPlatformService;
         this.officeReadPlatformService = officeReadPlatformService;
@@ -98,6 +105,7 @@ public class StaffApiResource {
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
         this.bulkImportWorkbookService=bulkImportWorkbookService;
         this.bulkImportWorkbookPopulatorService=bulkImportWorkbookPopulatorService;
+        this.appUserReadPlatformServiceImpl = appUserReadPlatformServiceImpl;
     }
 
     @GET
@@ -183,5 +191,27 @@ public class StaffApiResource {
         final Long importDocumentId = this. bulkImportWorkbookService.importWorkbook(GlobalEntityType.STAFF.toString(), uploadedInputStream,
                 fileDetail,locale,dateFormat);
         return this.toApiJsonSerializer.serialize(importDocumentId);
+    }
+    
+    @GET
+    @Path("/employee")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveStaffUnderAgent(@Context final UriInfo uriInfo, @QueryParam("sqlSearch") final String sqlSearch,
+            @QueryParam("officeId") final Long officeId,
+            @DefaultValue("false") @QueryParam("staffInOfficeHierarchy") final boolean staffInOfficeHierarchy,
+            @DefaultValue("false") @QueryParam("loanOfficersOnly") final boolean loanOfficersOnly,
+            @DefaultValue("active") @QueryParam("status") final String status, @QueryParam("clientId") final Long clientId) {
+    	
+    	Collection<AppUserData> agentUserDatas = null;
+    	Long parentUserId = null;
+    	agentUserDatas = appUserReadPlatformServiceImpl.getAgnetUserByClientId(clientId);
+    	for(AppUserData appUserData : agentUserDatas) {
+    		parentUserId = appUserData.getId();
+    	}
+    	String url = HttpConnectionTemplate.createBootUrl(uriInfo, "/agentUser/parentUser?userId=" + parentUserId + "");
+		String agentDetails = HttpConnectionTemplate.restTemplateForGetMethod(url, HttpMethod.GET);
+    	
+        return agentDetails;
     }
 }

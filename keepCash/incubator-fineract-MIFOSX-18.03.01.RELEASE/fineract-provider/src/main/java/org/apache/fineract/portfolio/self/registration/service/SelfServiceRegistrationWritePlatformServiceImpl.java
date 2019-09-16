@@ -225,6 +225,22 @@ public class SelfServiceRegistrationWritePlatformServiceImpl implements SelfServ
                 selfServiceRegistration.getFirstName());
         this.gmailBackedPlatformEmailService.sendDefinedEmail(emailDetail);
     }
+    
+    @Override
+    public String sendAuthorizationMailByAgent(AppUser appUser) {
+    	final String subject = "Transaction PIN ";
+    	final String pinNumber = randomAuthorizationTokenGeneration();
+        final String body = "Hi  " + appUser.getFirstname() + "," + "\n" + "To create user, please use following details\n"
+                + "Transaction PIN : "
+                + pinNumber;
+
+        final EmailDetail emailDetail = new EmailDetail(subject, body, appUser.getEmail(),
+        		appUser.getFirstname());
+        this.gmailBackedPlatformEmailService.sendDefinedEmail(emailDetail);
+        
+        return pinNumber;
+    }
+    
 
     private void throwExceptionIfValidationError(final List<ApiParameterError> dataValidationErrors, String accountNumber,
             String firstName, String lastName, String mobileNumber, boolean isEmailAuthenticationMode) {
@@ -322,9 +338,11 @@ public class SelfServiceRegistrationWritePlatformServiceImpl implements SelfServ
               String firstName = this.fromApiJsonHelper.extractStringNamed(SelfServiceApiConstants.firstNameParamName, element);
               baseDataValidator.reset().parameter(SelfServiceApiConstants.firstNameParamName).value(firstName).notBlank()
                       .notExceedingLengthOf(100);
-
-              String lastName = this.fromApiJsonHelper.extractStringNamed(SelfServiceApiConstants.lastNameParamName, element);
-              baseDataValidator.reset().parameter(SelfServiceApiConstants.lastNameParamName).value(lastName).notBlank().notExceedingLengthOf(100);
+              String lastName = null;
+              if(this.fromApiJsonHelper.extractStringNamed("lastName", element) != null) {
+            	  lastName = this.fromApiJsonHelper.extractStringNamed(SelfServiceApiConstants.lastNameParamName, element);
+                  baseDataValidator.reset().parameter(SelfServiceApiConstants.lastNameParamName).value(lastName).notBlank().notExceedingLengthOf(100);
+              }
 
               username = this.fromApiJsonHelper.extractStringNamed(SelfServiceApiConstants.usernameParamName, element);
               baseDataValidator.reset().parameter(SelfServiceApiConstants.usernameParamName).value(username).notBlank().notExceedingLengthOf(100);
@@ -372,7 +390,7 @@ public class SelfServiceRegistrationWritePlatformServiceImpl implements SelfServ
             AppUser appUser = new AppUser(office, user, allRoles,email, firstName,
                    lastName, null, passwordNeverExpire, isSelfServiceUser, null);
             
-            this.userDomainService.create(appUser, true);
+            this.userDomainService.create(appUser, true);            
             return appUser;
 
         } catch (final DataIntegrityViolationException dve) {

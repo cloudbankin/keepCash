@@ -167,6 +167,7 @@ public class    SavingsApiConstants {
     public static final String chargePaymentModeParamName = "chargePaymentMode";
 
     public static final String noteParamName = "note";
+    public static final String locationParamName = "location";
 
     // Savings account associations
     public static final String transactions = "transactions";

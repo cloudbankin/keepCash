@@ -33,4 +33,6 @@ public interface AppUserReadPlatformService {
     AppUserData retrieveUser(Long userId);
     
     boolean isUsernameExist(String username);
+    
+    Collection<AppUserData> getAgnetUserByClientId(final Long clientId);   
 }

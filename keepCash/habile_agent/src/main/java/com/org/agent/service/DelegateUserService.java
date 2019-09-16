@@ -10,6 +10,6 @@ import com.org.agent.model.AppUser;
 @Service
 public interface DelegateUserService {
 
-	AgentUserData createDelegate(JsonCommand command, Long userId, Long parentUserId);
+	AgentUserData createDelegate(JsonCommand command, Long userId, Long parentUserId, Integer transactionPIN);
 	
 }

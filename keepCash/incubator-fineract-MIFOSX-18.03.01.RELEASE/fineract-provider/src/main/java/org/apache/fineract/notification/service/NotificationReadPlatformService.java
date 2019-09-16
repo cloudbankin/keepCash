@@ -29,6 +29,10 @@ public interface NotificationReadPlatformService {
     Page<NotificationData> getAllUnreadNotifications(SearchParameters searchParameters);
 
     Page<NotificationData> getAllNotifications(SearchParameters searchParameters);
+    
+    Page<NotificationData> getAllReadAndUnreadNotifications(SearchParameters searchParameters, Long userId);
+    
+    Page<NotificationData> getNotificationsByAction(Long appUserId, String action);
 
     void updateNotificationReadStatus();
 }

@@ -22,6 +22,10 @@ public class AgentConstants {
 	public static final String dateOfBirthParamName = "dateOfBirth";
 	public static final String isAgreementSignUpParamName = "isAgreementSignUp";
 	public static final String isActiveParamName = "isActive";
+	public static final String employeeIdParamName = "employeeId";
+	public static final String faceUniqueIdParamName = "faceUniqueId";
+	public static final String statusParamName = "status";
+
 	
 	public static final String parentEntityIdParamName = "parentEntityId";
 	public static final String paraentEntityTypeParamName = "parentEntityType";
@@ -36,8 +40,13 @@ public class AgentConstants {
 	public static final String createdDateParamName = "createdDate";
 	public static final String lastModiDateParamName = "lastModifiedDate";
 	public static final String storeageEnumParamName = "storageTypeEnum";
-	//public static final String isActiveParamName = "active";
-	
+    
+	public static final String latitudeParamName = "latitude";
+	public static final String longitudeParamName = "longitude";
+	public static final String locationNameParamName = "locationName";
+	public static final String locationAddressParamName = "locationAddress";
+	public static final String ipAddressParamName = "ipAddress";
+	public static final String deviceIdParamName = "deviceId";
 }
 
 

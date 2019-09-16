@@ -65,7 +65,7 @@ public class AppUser extends AbstractPersistableCustom<Long> implements Platform
 
     private final static Logger logger = LoggerFactory.getLogger(AppUser.class);
 
-    @Column(name = "email", nullable = false, length = 100)
+    @Column(name = "email", nullable = true, length = 100)
     private String email;
 
     @Column(name = "username", nullable = false, length = 100)
@@ -172,10 +172,14 @@ public class AppUser extends AbstractPersistableCustom<Long> implements Platform
             final String lastname, final Staff staff, final boolean passwordNeverExpire, 
             final boolean isSelfServiceUser, final Collection<Client> clients) {
         this.office = office;
-        this.email = email.trim();
+        if(email != null) {
+        	this.email = email.trim();
+        }
         this.username = user.getUsername().trim();
         this.firstname = firstname.trim();
-        this.lastname = lastname.trim();
+        if(lastname != null) {
+        	this.lastname = lastname.trim();
+        }
         this.password = user.getPassword().trim();
         this.accountNonExpired = user.isAccountNonExpired();
         this.accountNonLocked = user.isAccountNonLocked();

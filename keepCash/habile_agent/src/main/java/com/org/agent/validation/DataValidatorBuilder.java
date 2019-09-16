@@ -1110,5 +1110,17 @@ public class DataValidatorBuilder {
         }
         return this;
     }
+    public DataValidatorBuilder locationvalidation() {
+        
+            final StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(this.resource).append(".")
+                    .append(this.parameter).append(".is.incorrectly.specificed");
+            final StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(this.parameter)
+                    .append(" is incorrectly specified").append(".");
+            final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
+                    defaultEnglishMessage.toString(), this.parameter," "," ");
+            this.dataValidationErrors.add(error);
+        
+        return this;
+    }
 
 }

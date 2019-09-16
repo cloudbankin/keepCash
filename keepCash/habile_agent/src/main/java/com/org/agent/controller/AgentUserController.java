@@ -47,7 +47,7 @@ public class AgentUserController {
 	}
 
 	@PostMapping(path = "/agentCreate", produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON)
-	public String create(@RequestParam Long userId, @RequestBody final String apiRequestBodyAsJson) {
+	public String create(@RequestParam Long userId, @RequestBody final String apiRequestBodyAsJson, @RequestParam Integer pinNumber) {
 		final CommandWrapper wrapper = new CommandWrapperBuilder() //
 				.withJson(apiRequestBodyAsJson) //
 				.build(); //
@@ -68,7 +68,7 @@ public class AgentUserController {
 	 		return errorMessage;
 	 	}
 		
-		final CommandProcessingResult result = agentUserServiceImpl.createAgent(command, userId, null);
+		final CommandProcessingResult result = agentUserServiceImpl.createAgent(command, userId, null, pinNumber);
 
 		return this.fromApiJsonHelper.toJson(result);
 	}
@@ -77,6 +77,12 @@ public class AgentUserController {
 	public String retrieve(@RequestParam Long userId) {
 		final AgentUserData AgentData = agentUserServiceImpl.retrieveAgent(userId);
 		return this.fromApiJsonHelper.toJson(AgentData);
+	}
+	
+	@GetMapping(path = "/retrieveAllAgents", produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON)
+	public String retrieveAllAgents() {
+		final Collection<AgentUserData> AgentDatas = agentUserServiceImpl.retrieveAllAgents();
+		return this.fromApiJsonHelper.toJson(AgentDatas);
 	}
 	
 	@PostMapping(path = "/updateClientInAgent", produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON)

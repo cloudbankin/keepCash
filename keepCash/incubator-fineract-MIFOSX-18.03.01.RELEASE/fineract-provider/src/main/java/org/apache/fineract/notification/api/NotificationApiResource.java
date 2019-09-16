@@ -31,6 +31,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -86,4 +89,33 @@ public class NotificationApiResource {
         this.context.authenticatedUser();
         this.notificationReadPlatformService.updateNotificationReadStatus();
     }
+    
+    @GET
+    @Path("allNotification")
+    @Consumes({MediaType.APPLICATION_JSON})
+    @Produces({MediaType.APPLICATION_JSON})
+    public String getNotifications(@Context final UriInfo uriInfo, @QueryParam("orderBy") final String orderBy,
+                                            @QueryParam("limit") final Integer limit,
+                                            @QueryParam("offset") final Integer offset,
+                                            @QueryParam("sortOrder") final String sortOrder,
+                                            @QueryParam("isRead") final boolean isRead,
+                                            @QueryParam("userId") final Long userId) {
+
+        this.context.authenticatedUser();
+        final Page<NotificationData> notificationData;
+        final SearchParameters searchParameters = SearchParameters.forPagination(offset, limit, orderBy, sortOrder);
+        if (!isRead) {
+            notificationData = this.notificationReadPlatformService.getAllUnreadNotifications(searchParameters);
+        } else {
+            notificationData = this.notificationReadPlatformService.getAllReadAndUnreadNotifications(searchParameters, userId);
+        }
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper
+                .process(uriInfo.getQueryParameters());
+        String result =  this.toApiJsonSerializer.serialize(settings, notificationData);
+        Gson gson = new Gson();
+        JsonObject jsonObject = gson.fromJson(result, JsonObject.class);
+        jsonObject.addProperty("status", "success");
+        return jsonObject.toString();
+    }
+
 }

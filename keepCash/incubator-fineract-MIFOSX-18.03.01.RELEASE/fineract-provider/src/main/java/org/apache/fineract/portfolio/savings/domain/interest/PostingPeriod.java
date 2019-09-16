@@ -237,7 +237,12 @@ public class PostingPeriod {
         return this.interestEarnedRounded;
     }
 
-    private static List<CompoundingPeriod> compoundingPeriodsInPostingPeriod(final LocalDateInterval postingPeriodInterval,
+    
+    public void setInterestEarnedRounded(Money interestEarnedRounded) {
+		this.interestEarnedRounded = interestEarnedRounded;
+	}
+
+	private static List<CompoundingPeriod> compoundingPeriodsInPostingPeriod(final LocalDateInterval postingPeriodInterval,
             final SavingsCompoundingInterestPeriodType interestPeriodType, final List<EndOfDayBalance> allEndOfDayBalances,
             final LocalDate upToInterestCalculationDate, int financialYearBeginningMonth) {
 

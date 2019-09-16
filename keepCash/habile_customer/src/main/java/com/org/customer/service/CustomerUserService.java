@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 
 import com.org.customer.command.CommandProcessingResult;
 import com.org.customer.command.api.JsonCommand;
+import com.org.customer.core.service.Page;
+import com.org.customer.core.service.SearchParameters;
 import com.org.customer.data.CustomerUserData;
 import com.org.customer.model.AppUser;
 import com.org.customer.model.CustomerUserEntity;
@@ -14,7 +16,7 @@ import com.org.customer.model.CustomerUserEntity;
 @Service
 public interface CustomerUserService {
 	
-	CommandProcessingResult createCustomer(JsonCommand command, Long userId,Long agentId);
+	CommandProcessingResult createCustomer(JsonCommand command, Long userId,Long agentId, Integer pin);
 	 
 	CustomerUserData retrieveCustomer(Long userId);
 	
@@ -23,7 +25,7 @@ public interface CustomerUserService {
 	CustomerUserEntity updateCustomerUserEntity(Map<String, Object> changes,CustomerUserEntity oldData,AppUser appUser,JsonCommand command);
 	 
 	Collection<CustomerUserData> retrieveAllCustomersUnderAgent(Long userId);
-	
+		
 
 	CommandProcessingResult updateClientInCustomerDetails(JsonCommand command, Long agentId);
 

@@ -18,16 +18,24 @@
  */
 package org.apache.fineract.portfolio.savings.service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.fineract.infrastructure.core.service.DateUtils;
+import org.apache.fineract.infrastructure.core.service.Page;
+import org.apache.fineract.infrastructure.core.service.SearchParameters;
 import org.apache.fineract.infrastructure.jobs.annotation.CronTarget;
 import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 import org.apache.fineract.infrastructure.jobs.service.JobName;
+import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
+import org.apache.fineract.portfolio.springBoot.enumType.SavingsTransactionDetailsTypeEnum;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -39,16 +47,19 @@ public class SavingsSchedularServiceImpl implements SavingsSchedularService {
     private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
     private final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper;
     private final SavingsAccountReadPlatformService savingAccountReadPlatformService;
+    private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
 
     @Autowired
     public SavingsSchedularServiceImpl(final SavingsAccountAssembler savingAccountAssembler,
             final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
             final SavingsAccountRepositoryWrapper savingAccountRepositoryWrapper,
-            final SavingsAccountReadPlatformService savingAccountReadPlatformService) {
+            final SavingsAccountReadPlatformService savingAccountReadPlatformService,
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService) {
         this.savingAccountAssembler = savingAccountAssembler;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingAccountRepositoryWrapper = savingAccountRepositoryWrapper;
         this.savingAccountReadPlatformService = savingAccountReadPlatformService;
+        this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
     }
 
     @CronTarget(jobName = JobName.POST_INTEREST_FOR_SAVINGS)
@@ -58,11 +69,57 @@ public class SavingsSchedularServiceImpl implements SavingsSchedularService {
                 .getValue());
         StringBuffer sb = new StringBuffer();
         for (final SavingsAccount savingsAccount : savingsAccounts) {
-            try {
+            try {            	
                 this.savingAccountAssembler.assignSavingAccountHelpers(savingsAccount);
                 boolean postInterestAsOn = false;
                 LocalDate transactionDate = null;
                 this.savingsAccountWritePlatformService.postInterest(savingsAccount, postInterestAsOn, transactionDate);
+            } catch (Exception e) {
+                Throwable realCause = e;
+                if (e.getCause() != null) {
+                    realCause = e.getCause();
+                }
+                sb.append("failed to post interest for Savings with id " + savingsAccount.getId() + " with message "
+                        + realCause.getMessage());
+            }
+        }
+        
+        if (sb.length() > 0) { throw new JobExecutionException(sb.toString()); }
+    }
+    
+    @CronTarget(jobName = JobName.POST_INTEREST_FOR_AGENT_SAVINGS)
+    @Override
+    public void postInterestForAgentAccounts() throws JobExecutionException {
+        final List<SavingsAccount> savingsAccounts = this.savingAccountRepositoryWrapper.findSavingAccountByStatus(SavingsAccountStatusType.ACTIVE
+                .getValue());
+        StringBuffer sb = new StringBuffer();
+        for (final SavingsAccount savingsAccount : savingsAccounts) {
+            try {
+                final List<SavingsAccountTransaction> fullTransactionsSorted = new ArrayList<>();
+                fullTransactionsSorted.addAll(savingsAccount.getTransactions());
+            	Long productId = new Long(1);
+            	if(savingsAccount.productId().equals(productId)) {
+                    final List<SavingsAccountTransaction> listOfTransactionsSorted = new ArrayList<>();
+                    SearchParameters searchParameters = new SearchParameters(null, savingsAccount.getId(), null, null, null, SavingsTransactionDetailsTypeEnum.TOPUP.getValue(), null, null, null, null, false, null);
+                    Page<SavingsAccountTransactionData> SavingsAccountTransactionData = savingsAccountReadPlatformService.retrieveTransactionByCreteria(searchParameters, savingsAccount.getId());
+                    for(SavingsAccountTransactionData accountTransactionData : SavingsAccountTransactionData.getPageItems()) {
+                    	for(SavingsAccountTransaction savingsAccountTransaction : savingsAccount.getTransactions()) {
+                    		if(accountTransactionData.getId().equals(savingsAccountTransaction.getId())) {
+                    			listOfTransactionsSorted.add(savingsAccountTransaction);
+                    			break;
+                    		}
+                    	}
+                    }
+                    savingsAccount.setTransaction(listOfTransactionsSorted);
+                    
+            	}
+
+                	
+                            	
+                this.savingAccountAssembler.assignSavingAccountHelpers(savingsAccount);
+                boolean postInterestAsOn = false;
+                LocalDate transactionDate = null;
+                this.savingsAccountWritePlatformService.postInterestTopup(savingsAccount, postInterestAsOn, transactionDate, fullTransactionsSorted);
             } catch (Exception e) {
                 Throwable realCause = e;
                 if (e.getCause() != null) {

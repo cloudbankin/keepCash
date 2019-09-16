@@ -25,6 +25,8 @@ public class SearchConditions {
     private final String searchQuery;
     private final String searchResource;
     private final Boolean clientSearch;
+    private final Boolean agentSearch;
+    private final Boolean customerSearch;
     private final Boolean groupSearch;
     private final Boolean loanSeach;
 	private final Boolean savingSeach;
@@ -38,6 +40,10 @@ public class SearchConditions {
         this.exactMatch=exactMatch;
         this.clientSearch = (null == searchResource || searchResource.toLowerCase().contains(
                 SEARCH_SUPPORTED_RESOURCES.CLIENTS.name().toLowerCase())) ? true : false;
+        this.agentSearch = (null == searchResource || searchResource.toLowerCase().contains(
+                SEARCH_SUPPORTED_RESOURCES.AGENTS.name().toLowerCase())) ? true : false;
+        this.customerSearch = (null == searchResource || searchResource.toLowerCase().contains(
+                SEARCH_SUPPORTED_RESOURCES.CUSTOMERS.name().toLowerCase())) ? true : false;
         this.groupSearch = (null == searchResource || searchResource.toLowerCase().contains(
                 SEARCH_SUPPORTED_RESOURCES.GROUPS.name().toLowerCase())) ? true : false;
         this.loanSeach = (null == searchResource || searchResource.toLowerCase().contains(
@@ -50,11 +56,13 @@ public class SearchConditions {
                 SEARCH_SUPPORTED_RESOURCES.CLIENTIDENTIFIERS.name().toLowerCase())) ? true : false;
     }
 
-    public SearchConditions(final String searchQueryParam, final String searchResource, final Boolean clientSearch,
+    public SearchConditions(final String searchQueryParam, final String searchResource, final Boolean clientSearch, final Boolean agentsearch, final Boolean customersearch,
             final Boolean groupSearch, final Boolean loanSeach, final Boolean savingSeach, final Boolean shareSeach, final Boolean clientIdentifierSearch, Boolean exactMatch) {
         this.searchQuery = searchQueryParam;
         this.searchResource = searchResource;
         this.clientSearch = clientSearch;
+        this.agentSearch = agentsearch;
+        this.customerSearch = customersearch;
         this.groupSearch = groupSearch;
         this.loanSeach = loanSeach;
 		this.savingSeach = savingSeach;
@@ -77,7 +85,15 @@ public class SearchConditions {
         return this.clientSearch;
     }
 
-    public Boolean isGroupSearch() {
+    public Boolean isAgentSearch() {
+		return this.agentSearch;
+	}
+
+    public Boolean isCustomerSearch() {
+		return this.customerSearch;
+	}
+    
+	public Boolean isGroupSearch() {
         return this.groupSearch;
     }
 

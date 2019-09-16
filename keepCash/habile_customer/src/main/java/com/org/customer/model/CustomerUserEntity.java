@@ -1,9 +1,9 @@
 package com.org.customer.model;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -20,6 +20,7 @@ import org.joda.time.LocalDate;
 import com.org.customer.command.api.JsonCommand;
 import com.org.customer.controller.CustomerConstants;
 import com.org.customer.core.AbstractPersistableCustom;
+
 
 @Entity
 @Table(name = "hab_customer_user")
@@ -75,7 +76,49 @@ public class CustomerUserEntity extends AbstractPersistableCustom<Long> {
 	
 	@Column(name = "parent_user_id", length = 20)
 	private Long parentUserId;
+	
+	@Column(name = "goal_id", length = 20)
+	private Long goalId;
+	
+	@Column(name = "goal_name", length = 1000)
+	private String goalName;
+	
+	@Column(name = "goal_amount")
+	private BigDecimal goalAmount;
+	
+	@Column(name = "goal_start_date")
+	@Temporal(TemporalType.DATE)
+	private Date goalStartDate;
 
+	@Column(name = "goal_end_date")
+	@Temporal(TemporalType.DATE)
+	private Date goalEndDate;
+	
+	@Column(name = "latitude")
+	private String latitude;
+	
+	@Column(name = "longitude")
+	private String longitude;
+	
+	@Column(name = "location_name")
+	private String locationName;
+	
+	@Column(name = "location_address")
+	private String locationAddress;
+	
+	@Column(name = "ip_address")
+	private String ipAddress;
+	
+	@Column(name = "device_id")
+	private String deviceId;
+
+	@Column(name = "transaction_pin")
+	private Integer transactionPin;
+	
+	@Column(name = "face_unique_id", length = 20, unique = true)
+	private String faceUniqueId;
+	
+	
 	public CustomerUserEntity() {
 
 	}
@@ -83,7 +126,9 @@ public class CustomerUserEntity extends AbstractPersistableCustom<Long> {
 	public CustomerUserEntity(final AppUser appUser, final Long clientId, final Long appUserTypeEnum,
 			final String companyName, final String companyAddress, final LocalDate dateOfBirth, final String mobileNo,
 			final String emailId, final String faceId, final boolean isAgreementSignUp, final boolean isActive,
-			final String authMode, final String image, final String imageEncryption, final LocalDate createdOnDate, final Long parentUserId) {
+			final String authMode, final String image, final String imageEncryption, final LocalDate createdOnDate, final Long parentUserId,
+			final String latitude,final String longitude, final String locationName,final String locationAddress,final String ipAddress,final String deviceId,
+			final Integer transactionPin, final String faceUniqueId ) {
 
 		this.appUser = appUser;
 		this.clientId = clientId;
@@ -106,10 +151,20 @@ public class CustomerUserEntity extends AbstractPersistableCustom<Long> {
 			this.createdOnDate = createdOnDate.toDate();
 		}
 		this.parentUserId=parentUserId;
+		
+		this.parentUserId = parentUserId;
+		this.latitude = latitude;
+		this.longitude = longitude;
+		this.locationName = locationName;
+		this.locationAddress = locationAddress;
+		this.ipAddress = ipAddress;
+		this.deviceId = deviceId;
+		this.transactionPin = transactionPin;
+		this.faceUniqueId = faceUniqueId;
 
 	}
 
-	public static CustomerUserEntity createCustomerUserEntity(JsonCommand command, AppUser appUser,Long agentId) {
+	public static CustomerUserEntity createCustomerUserEntity(JsonCommand command, AppUser appUser,Long agentId, Integer transactionPinNo) {
 		Long clientId = null;
 		Long appUserTypeEnum = command.longValueOfParameterNamed(CustomerConstants.appUserTypeIdParamName);
 		String companyName = null;
@@ -126,10 +181,20 @@ public class CustomerUserEntity extends AbstractPersistableCustom<Long> {
 		String imageEncryption = command.stringValueOfParameterNamed(CustomerConstants.imageEncryptionParamName);
 		LocalDate createdOnDate = new LocalDate();
 		Long parentUserId = agentId;
+		
+		String latitude = null;
+        String longitude = null; 
+		String locationName = null;
+		String locationAddress = null;
+		String ipAddress = null;
+		String deviceId = null;
+		Integer transactionPin = transactionPinNo;
+		String faceUniqueId = command.stringValueOfParameterNamed(CustomerConstants.faceUniqueIdParamName);
 
 		return new CustomerUserEntity(appUser, clientId, appUserTypeEnum, companyName, companyAddress, dateOfBirth,
 				mobileNo, emailId, faceId, isAgreementSignUp, isActive, authMode, image, imageEncryption,
-				createdOnDate, parentUserId);
+				createdOnDate, parentUserId,latitude,longitude,locationName,locationAddress,ipAddress,deviceId,
+				transactionPin, faceUniqueId);
 	}
 
 	public AppUser getAppUser() {
@@ -259,6 +324,67 @@ public class CustomerUserEntity extends AbstractPersistableCustom<Long> {
 	public void setParentUserId(Long parentUserId) {
 		this.parentUserId = parentUserId;
 	}
+	
+	
+	
+	public Long getGoalId() {
+		return goalId;
+	}
+
+	public void setGoalId(Long goalId) {
+		this.goalId = goalId;
+	}
+
+	public String getGoalName() {
+		return goalName;
+	}
+
+	public void setGoalName(String goalName) {
+		this.goalName = goalName;
+	}
+
+	public BigDecimal getGoalAmount() {
+		return goalAmount;
+	}
+
+	public void setGoalAmount(BigDecimal goalAmount) {
+		this.goalAmount = goalAmount;
+	}
+
+	public Date getGoalStartDate() {
+		return goalStartDate;
+	}
+
+	public void setGoalStartDate(Date goalStartDate) {
+		this.goalStartDate = goalStartDate;
+	}
+
+	public Date getGoalEndDate() {
+		return goalEndDate;
+	}
+
+	public void setGoalEndDate(Date goalEndDate) {
+		this.goalEndDate = goalEndDate;
+	}
+	
+	
+
+	public Integer getTransactionPin() {
+		return transactionPin;
+	}
+
+	public void setTransactionPin(Integer transactionPin) {
+		this.transactionPin = transactionPin;
+	}
+
+	public String getFaceUniqueId() {
+		return faceUniqueId;
+	}
+
+	public void setFaceUniqueId(String faceUniqueId) {
+		this.faceUniqueId = faceUniqueId;
+	}
+
 	public Map<String, Object> update(final JsonCommand command) {
 
         final Map<String, Object> actualChanges = new LinkedHashMap<>(9);
@@ -310,11 +436,46 @@ public class CustomerUserEntity extends AbstractPersistableCustom<Long> {
             final Long newValue = command.longValueOfParameterNamed(CustomerConstants.appUserTypeIdParamName);
             actualChanges.put(CustomerConstants.appUserTypeIdParamName, newValue);
         }
+        
+        if (command.isChangeInLongParameterNamed(CustomerConstants.customerGoalId, getGoalId())) {
+            final Long newValue = command.longValueOfParameterNamed(CustomerConstants.customerGoalId);
+            actualChanges.put(CustomerConstants.customerGoalId, newValue);
+        }
+        
+        final BigDecimal newValu = command.bigDecimalValueOfParameterNamed(CustomerConstants.customerGoalAmount);
+        if (command.isChangeInBigDecimalParameterNamed(CustomerConstants.customerGoalAmount, this.goalAmount)) {
+            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(CustomerConstants.customerGoalAmount);
+            actualChanges.put(CustomerConstants.customerGoalAmount, newValue);
+        }
+        
+        if (command.isChangeInStringParameterNamed(CustomerConstants.customerGoalName, this.goalName)) {
+            final String newValue = command.stringValueOfParameterNamed(CustomerConstants.customerGoalName);
+            actualChanges.put(CustomerConstants.customerGoalName, newValue);
+            this.companyName = StringUtils.defaultIfEmpty(newValue, null);
+        }
 
         final String dateFormatAsInput = command.dateFormat();
         final String localeAsInput = command.locale();
-
         
+        if (command.isChangeInDateParameterNamed(CustomerConstants.customerGoalStartDate, this.goalStartDate)) {
+            final String valueAsInput = command.stringValueOfParameterNamed(CustomerConstants.customerGoalStartDate);
+            actualChanges.put(CustomerConstants.customerGoalStartDate, valueAsInput);
+            actualChanges.put(CustomerConstants.dateFormatParamName, dateFormatAsInput);
+            actualChanges.put(CustomerConstants.localeParamName, localeAsInput);
+
+            final LocalDate newValue = command.localDateValueOfParameterNamed(CustomerConstants.dateOfBirthParamName);
+            this.dateOfBirth = newValue.toDate();
+        }
+
+        if (command.isChangeInDateParameterNamed(CustomerConstants.customerGoalEndDate, this.goalEndDate)) {
+            final String valueAsInput = command.stringValueOfParameterNamed(CustomerConstants.customerGoalEndDate);
+            actualChanges.put(CustomerConstants.customerGoalEndDate, valueAsInput);
+            actualChanges.put(CustomerConstants.dateFormatParamName, dateFormatAsInput);
+            actualChanges.put(CustomerConstants.localeParamName, localeAsInput);
+
+            final LocalDate newValue = command.localDateValueOfParameterNamed(CustomerConstants.dateOfBirthParamName);
+            this.dateOfBirth = newValue.toDate();
+        }
 
         if (command.isChangeInDateParameterNamed(CustomerConstants.dateOfBirthParamName, getDateOfBirth())) {
             final String valueAsInput = command.stringValueOfParameterNamed(CustomerConstants.dateOfBirthParamName);
@@ -340,4 +501,52 @@ public class CustomerUserEntity extends AbstractPersistableCustom<Long> {
 
         return actualChanges;
     }
+
+	public String getLatitude() {
+		return latitude;
+	}
+
+	public void setLatitude(String latitude) {
+		this.latitude = latitude;
+	}
+
+	public String getLongitude() {
+		return longitude;
+	}
+
+	public void setLongitude(String longitude) {
+		this.longitude = longitude;
+	}
+
+	public String getLocationName() {
+		return locationName;
+	}
+
+	public void setLocationName(String locationName) {
+		this.locationName = locationName;
+	}
+
+	public String getLocationAddress() {
+		return locationAddress;
+	}
+
+	public void setLocationAddress(String locationAddress) {
+		this.locationAddress = locationAddress;
+	}
+
+	public String getIpAddress() {
+		return ipAddress;
+	}
+
+	public void setIpAddress(String ipAddress) {
+		this.ipAddress = ipAddress;
+	}
+
+	public String getDeviceId() {
+		return deviceId;
+	}
+
+	public void setDeviceId(String deviceId) {
+		this.deviceId = deviceId;
+	}
 }

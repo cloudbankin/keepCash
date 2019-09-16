@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.client.service;
 
 import java.util.Collection;
+import java.util.List;
 
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
@@ -29,6 +30,10 @@ public interface ClientReadPlatformService {
     ClientData retrieveTemplate(Long officeId, boolean staffInSelectedOfficeOnly);
 
     Page<ClientData> retrieveAll(SearchParameters searchParameters);
+    
+    Page<ClientData> retrieveAllAgent(SearchParameters searchParameters, List<Long> clientTypeId);
+    
+    Page<ClientData> retrieveAllCustomer(SearchParameters searchParameters);
 
     ClientData retrieveOne(Long clientId);
 

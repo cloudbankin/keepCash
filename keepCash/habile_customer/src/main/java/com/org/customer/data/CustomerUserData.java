@@ -1,5 +1,7 @@
 package com.org.customer.data;
 
+import java.math.BigDecimal;
+
 import org.joda.time.LocalDate;
 
 import com.org.customer.core.data.EnumOptionData;
@@ -23,7 +25,6 @@ public class CustomerUserData {
 	private String companyAddress;
 	private String dateOfBirth;
 	private String mobileNo;
-	private String faceId;
 	private boolean isAgreementSignUp;
 	private boolean isActive;
 	private String createdOnDate;
@@ -31,14 +32,30 @@ public class CustomerUserData {
 	private String image;
 	private String imageEncryption;
 	private Long parentUserId;
+	
+	private Long goalId;
+	private String goalName;
+	private BigDecimal goalAmount;
+	private String goalStartDate;
+	private String goalEndDate;
+        private String latitude;
+	private String longitude;
+	private String locationName;
+	private String locationAddress;
+	private String ipAddress;
+	private String deviceId;
+	private String customerFaceUniqueId;
 
 	public CustomerUserData(final Long appUserId, final Long office, final Long staff, final String emailId, final String userName,
 			final String firstName, final String lastName, final boolean enabled, final boolean isSelfServiceUser,
 			final Long clientId, final EnumOptionData appUserTypeEnum, final String companyName,
 			final String companyAddress, final String dateOfBirth,
-			final String mobileNo, final String faceId, final boolean isAgreementSignUp,
+			final String mobileNo,  final boolean isAgreementSignUp,
 			final boolean isActive, final String authMode, final String image,
-			final String imageEncryption, final String createdOnDate, final Long parentUserId) {
+			final String imageEncryption, final String createdOnDate, final Long parentUserId,
+			final Long goalId, final String goalName, final BigDecimal goalAmount, final String startDate, final String endDate,final String latitude,
+	        final String longitude,final String locationName,final String locationAddress,
+	        final String ipAddress,final String deviceId, final String customerFaceUniqueId) {
 		this.appUserId = appUserId;
 		this.office = office;
 		this.staff = staff;
@@ -54,7 +71,6 @@ public class CustomerUserData {
 		this.companyAddress = companyAddress;
 		this.dateOfBirth = dateOfBirth;
 		this.mobileNo = mobileNo;
-		this.faceId = faceId;
 		this.isAgreementSignUp = isAgreementSignUp;
 		this.isActive = isActive;
 		this.createdOnDate = createdOnDate;
@@ -62,10 +78,29 @@ public class CustomerUserData {
 		this.image = image;
 		this.imageEncryption = imageEncryption;
 		this.parentUserId = parentUserId;
+		this.goalId = goalId;
+		this.goalName = goalName;
+		this.goalAmount = goalAmount;
+		this.goalStartDate = startDate;
+		this.goalEndDate = endDate;
+                this.latitude = latitude;
+		this.longitude = longitude;
+		this.locationName = locationName;
+		this.locationAddress = locationAddress;
+		this.ipAddress = ipAddress;
+		this.deviceId = deviceId;
+		this.customerFaceUniqueId = customerFaceUniqueId;
 
 		
 	}
 
+	public static CustomerUserData instance(final Long appUserId) {
+		
+		return new CustomerUserData(appUserId, null, null, null, null, null, null,
+				false, false, null, null, null, null, null,  null, false, false,
+				null, null, null, null, null, null, null, null, null, null,null, null, null, null, null, null, null);
+	}
+	
 	public Long getAppUserId() {
 		return appUserId;
 	}
@@ -186,13 +221,6 @@ public class CustomerUserData {
 		this.mobileNo = mobileNo;
 	}
 
-	public String getFaceId() {
-		return faceId;
-	}
-
-	public void setFaceId(String faceId) {
-		this.faceId = faceId;
-	}
 
 	public boolean isAgreementSignUp() {
 		return isAgreementSignUp;
@@ -241,5 +269,110 @@ public class CustomerUserData {
 	public void setImageEncryption(String imageEncryption) {
 		this.imageEncryption = imageEncryption;
 	}
+
+	public Long getParentUserId() {
+		return parentUserId;
+	}
+
+	public void setParentUserId(Long parentUserId) {
+		this.parentUserId = parentUserId;
+	}
+
+	public Long getGoalId() {
+		return goalId;
+	}
+
+	public void setGoalId(Long goalId) {
+		this.goalId = goalId;
+	}
+
+	public String getGoalName() {
+		return goalName;
+	}
+
+	public void setGoalName(String goalName) {
+		this.goalName = goalName;
+	}
+
+	public BigDecimal getGoalAmount() {
+		return goalAmount;
+	}
+
+	public void setGoalAmount(BigDecimal goalAmount) {
+		this.goalAmount = goalAmount;
+	}
+
+	public String getGoalStartDate() {
+		return goalStartDate;
+	}
+
+	public void setGoalStartDate(String goalStartDate) {
+		this.goalStartDate = goalStartDate;
+	}
+
+	public String getGoalEndDate() {
+		return goalEndDate;
+	}
+
+	public void setGoalEndDate(String goalEndDate) {
+		this.goalEndDate = goalEndDate;
+	}
+        public String getLatitude() {
+		return latitude;
+	}
+
+	public void setLatitude(String latitude) {
+		this.latitude = latitude;
+	}
+
+	public String getLongitude() {
+		return longitude;
+	}
+
+	public void setLongitude(String longitude) {
+		this.longitude = longitude;
+	}
+
+	public String getLocationName() {
+		return locationName;
+	}
+
+	public void setLocationName(String locationName) {
+		this.locationName = locationName;
+	}
+
+	public String getLocationAddress() {
+		return locationAddress;
+	}
+
+	public void setLocationAddress(String locationAddress) {
+		this.locationAddress = locationAddress;
+	}
+
+	public String getIpAddress() {
+		return ipAddress;
+	}
+
+	public void setIpAddress(String ipAddress) {
+		this.ipAddress = ipAddress;
+	}
+
+	public String getDeviceId() {
+		return deviceId;
+	}
+
+	public void setDeviceId(String deviceId) {
+		this.deviceId = deviceId;
+	}
+
+	public String getCustomerFcaeUniqueId() {
+		return customerFaceUniqueId;
+	}
+
+	public void setCustomerFcaeUniqueId(String customerFcaeUniqueId) {
+		this.customerFaceUniqueId = customerFcaeUniqueId;
+	}
+	
+	
 	
 }

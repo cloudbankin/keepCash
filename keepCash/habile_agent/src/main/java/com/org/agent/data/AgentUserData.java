@@ -23,21 +23,32 @@ public class AgentUserData {
 	private String companyAddress;
 	private String dateOfBirth;
 	private String mobileNo;
-	private String faceId;
 	private boolean isAgreementSignUp;
 	private boolean isActive;
 	private String createdOnDate;
 	private String authMode;
 	private String image;
 	private String imageEncryption;
+	private Long employeeId;
+	private String latitude;
+	private String longitude;
+	private String locationName;
+	private String locationAddress;
+	private String ipAddress;
+	private String deviceId;
+	private String agentFaceUniqueId;
+	private EnumOptionData accountStatus;
+	
 
 	public AgentUserData(final Long appUserId, final Long office, final Long staff, final String emailId, final String userName,
 			final String firstName, final String lastName, final boolean enabled, final boolean isSelfServiceUser,
 			final Long clientId, final EnumOptionData appUserTypeEnum, final String companyName,
 			final String companyAddress, final String dateOfBirth,
-			final String mobileNo, final String faceId, final boolean isAgreementSignUp,
+			final String mobileNo, final boolean isAgreementSignUp,
 			final boolean isActive, final String authMode, final String image,
-			final String imageEncryption, final String createdOnDate) {
+			final String imageEncryption, final String createdOnDate,final String latitude,
+	        final String longitude,final String locationName,final String locationAddress,
+	        final String ipAddress,final String deviceId,final Long employeeId, final String agentFaceUniqueId, final EnumOptionData accountStatus) {
 		this.appUserId = appUserId;
 		this.office = office;
 		this.staff = staff;
@@ -53,13 +64,21 @@ public class AgentUserData {
 		this.companyAddress = companyAddress;
 		this.dateOfBirth = dateOfBirth;
 		this.mobileNo = mobileNo;
-		this.faceId = faceId;
 		this.isAgreementSignUp = isAgreementSignUp;
 		this.isActive = isActive;
 		this.createdOnDate = createdOnDate;
 		this.authMode = authMode;
 		this.image = image;
 		this.imageEncryption = imageEncryption;
+		this.latitude = latitude;
+		this.longitude = longitude;
+		this.locationName = locationName;
+		this.locationAddress = locationAddress;
+		this.ipAddress = ipAddress;
+		this.deviceId = deviceId;
+		this.employeeId = employeeId;
+		this.agentFaceUniqueId = agentFaceUniqueId;
+		this.accountStatus = accountStatus;
 		
 	}
 
@@ -183,14 +202,6 @@ public class AgentUserData {
 		this.mobileNo = mobileNo;
 	}
 
-	public String getFaceId() {
-		return faceId;
-	}
-
-	public void setFaceId(String faceId) {
-		this.faceId = faceId;
-	}
-
 	public boolean isAgreementSignUp() {
 		return isAgreementSignUp;
 	}
@@ -238,5 +249,81 @@ public class AgentUserData {
 	public void setImageEncryption(String imageEncryption) {
 		this.imageEncryption = imageEncryption;
 	}
+
+	public String getLatitude() {
+		return latitude;
+	}
+
+	public void setLatitude(String latitude) {
+		this.latitude = latitude;
+	}
+
+	public String getLongitude() {
+		return longitude;
+	}
+
+	public void setLongitude(String longitude) {
+		this.longitude = longitude;
+	}
+
+	public String getLocationName() {
+		return locationName;
+	}
+
+	public void setLocationName(String locationName) {
+		this.locationName = locationName;
+	}
+
+	public String getLocationAddress() {
+		return locationAddress;
+	}
+
+	public void setLocationAddress(String locationAddress) {
+		this.locationAddress = locationAddress;
+	}
+
+	public String getIpAddress() {
+		return ipAddress;
+	}
+
+	public void setIpAddress(String ipAddress) {
+		this.ipAddress = ipAddress;
+	}
+
+	public String getDeviceId() {
+		return deviceId;
+	}
+
+	public void setDeviceId(String deviceId) {
+		this.deviceId = deviceId;
+	}
+
+	public Long getEmployeeId() {
+		return employeeId;
+	}
+
+	public void setEmployeeId(Long employeeId) {
+		this.employeeId = employeeId;
+	}
+
+	public String getAgentFaceUniqueId() {
+		return agentFaceUniqueId;
+	}
+
+	public void setAgentFaceUniqueId(String agentFaceUniqueId) {
+		this.agentFaceUniqueId = agentFaceUniqueId;
+	}
+
+	public EnumOptionData getAccountStatus() {
+		return accountStatus;
+	}
+
+	public void setAccountStatus(EnumOptionData accountStatus) {
+		this.accountStatus = accountStatus;
+	}
+
+	
+
+	
 	
 }

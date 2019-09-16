@@ -1,5 +1,6 @@
 package com.org.customer.service.implementation;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Date;
@@ -10,6 +11,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.google.gson.JsonElement;
 import com.org.customer.command.CommandProcessingResult;
 import com.org.customer.command.CommandProcessingResultBuilder;
 import com.org.customer.command.api.JsonCommand;
@@ -22,6 +24,8 @@ import com.org.customer.repository.CustomerSavingsAccountRepository;
 import com.org.customer.repository.CustomerUserRepository;
 import com.org.customer.repository.AppUserRepository;
 import com.org.customer.service.CustomerUserService;
+import com.org.customer.command.FromJsonHelper;
+
 
 
 @Component
@@ -31,21 +35,42 @@ public class CustomerUserServiceImpl implements CustomerUserService {
 	private final AppUserRepository appUserRepository;
 	private final AppUserServiceImpl appUserServiceImpl;
 	private final CustomerSavingsAccountRepository customerSavingsAccountRepository;
+	private final FromJsonHelper fromApiJsonHelper;
+
 
 	@Autowired
 	public CustomerUserServiceImpl(final CustomerUserRepository customerUserRepository,
 			final AppUserRepository appUserRepository, final AppUserServiceImpl appUserServiceImpl,
-			final CustomerSavingsAccountRepository customerSavingsAccountRepository) {
+			final CustomerSavingsAccountRepository customerSavingsAccountRepository,final FromJsonHelper fromJsonHelper) {
 		this.customerUserRepository = customerUserRepository;
 		this.appUserRepository = appUserRepository;
 		this.appUserServiceImpl = appUserServiceImpl;
 		this.customerSavingsAccountRepository = customerSavingsAccountRepository;
+		this.fromApiJsonHelper = fromJsonHelper;
 	}
 
 	@Override
-	public CommandProcessingResult createCustomer(JsonCommand command, Long appUserId, Long agentId) {
+	public CommandProcessingResult createCustomer(JsonCommand command, Long appUserId, Long agentId, Integer pin) {
+		JsonElement element = command.jsonElement("location");
 		final CustomerUserEntity customerUser = CustomerUserEntity.createCustomerUserEntity(command,
-				appUserServiceImpl.findByIdAppUser(appUserId),agentId);
+				appUserServiceImpl.findByIdAppUser(appUserId),agentId, pin);
+		
+		if(element != null) {
+			String latitude =fromApiJsonHelper.extractStringNamed(CustomerConstants.latitudeParamName, element);
+	        String longitude = fromApiJsonHelper.extractStringNamed(CustomerConstants.longitudeParamName, element);
+			String locationName = fromApiJsonHelper.extractStringNamed(CustomerConstants.locationNameParamName, element);
+			String locationAddress = fromApiJsonHelper.extractStringNamed(CustomerConstants.locationAddressParamName, element);
+			String ipAddress = fromApiJsonHelper.extractStringNamed(CustomerConstants.ipAddressParamName, element);
+			String deviceId = fromApiJsonHelper.extractStringNamed(CustomerConstants.deviceIdParamName, element);
+			customerUser.setLatitude(latitude);
+			customerUser.setLongitude(longitude);
+			customerUser.setLocationName(locationName);
+			customerUser.setLocationAddress(locationAddress);
+			customerUser.setIpAddress(ipAddress);
+			customerUser.setDeviceId(deviceId);
+		}
+		
+		
 		customerUserRepository.save(customerUser);
 
 		return new CommandProcessingResultBuilder()
@@ -58,6 +83,7 @@ public class CustomerUserServiceImpl implements CustomerUserService {
 		final CustomerUserData customerUser = CustomerUserReadServiceImpl.retrieveCustomerUserEntity(Id);
 		return customerUser;
 	}
+	
 	
 
 	@Override
@@ -130,8 +156,7 @@ public class CustomerUserServiceImpl implements CustomerUserService {
 		
 	}
 	
-	public CustomerUserEntity updateCustomerUserEntity(Map<String, Object> changes,CustomerUserEntity oldData,AppUser appUser,JsonCommand command)
-	{
+	public CustomerUserEntity updateCustomerUserEntity(Map<String, Object> changes,CustomerUserEntity oldData,AppUser appUser,JsonCommand command){
 		CustomerUserEntity customerUserDataAfterChanges=oldData;
 		if (changes.containsKey(CustomerConstants.companyNameParamName)) {
 			final String newValue = command.stringValueOfParameterNamed(CustomerConstants.companyNameParamName);
@@ -213,6 +238,51 @@ public class CustomerUserServiceImpl implements CustomerUserService {
                 newimageEncryption = command.stringValueOfParameterNamed(CustomerConstants.imageEncryptionParamName);
             }
             customerUserDataAfterChanges.setImageEncryption(newimageEncryption);
+		}
+		
+		if (changes.containsKey(CustomerConstants.customerGoalId)) {
+			final Long newValue = command.longValueOfParameterNamed(CustomerConstants.customerGoalId);
+            Long newGoalId = null;
+            if (newValue != null) {
+            	newGoalId = command.longValueOfParameterNamed(CustomerConstants.customerGoalId);
+            }
+            customerUserDataAfterChanges.setGoalId(newGoalId);
+		}
+		
+		if (changes.containsKey(CustomerConstants.customerGoalAmount)) {
+			final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(CustomerConstants.customerGoalAmount);
+			BigDecimal newGoalAmount = null;
+            if (newValue != null) {
+            	newGoalAmount = command.bigDecimalValueOfParameterNamed(CustomerConstants.customerGoalAmount);
+            }
+            customerUserDataAfterChanges.setGoalAmount(newGoalAmount);
+		}
+		
+		if (changes.containsKey(CustomerConstants.customerGoalName)) {
+			final String newValue = command.stringValueOfParameterNamed(CustomerConstants.customerGoalName);
+            String newGoalName = null;
+            if (newValue != null) {
+            	newGoalName = command.stringValueOfParameterNamed(CustomerConstants.customerGoalName);
+            }
+            customerUserDataAfterChanges.setGoalName(newGoalName);
+		}
+		
+		if (changes.containsKey(CustomerConstants.customerGoalStartDate)) {
+			final Date newValue = command.DateValueOfParameterNamed(CustomerConstants.customerGoalStartDate);
+			Date newGoalStartDate = null;
+            if (newValue != null) {
+            	newGoalStartDate = command.DateValueOfParameterNamed(CustomerConstants.customerGoalStartDate);
+            }
+            customerUserDataAfterChanges.setGoalStartDate(newGoalStartDate);
+		}
+		
+		if (changes.containsKey(CustomerConstants.customerGoalEndDate)) {
+			final Date newValue = command.DateValueOfParameterNamed(CustomerConstants.customerGoalEndDate);
+			Date newGoalEndDate = null;
+            if (newValue != null) {
+            	newGoalEndDate = command.DateValueOfParameterNamed(CustomerConstants.customerGoalEndDate);
+            }
+            customerUserDataAfterChanges.setGoalEndDate(newGoalEndDate);
 		}
 		
 		return customerUserDataAfterChanges;

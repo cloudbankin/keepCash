@@ -318,6 +318,17 @@ public class DataValidatorBuilder {
         }
         return this;
     }
+    public DataValidatorBuilder ActivationBeforeTransactionDateValidation(final LocalDate localDate) {
+        
+            final StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(this.resource).append(".")
+                    .append(this.parameter).append(".in.before.activationdate");
+            final StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(this.parameter)
+                    .append(" is before activation date ").append(".");
+            final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
+                    defaultEnglishMessage.toString(), this.parameter,  this.value.toString());
+            this.dataValidationErrors.add(error);
+            return this;
+    }
     
 
     public DataValidatorBuilder inMinMaxRange(final Integer min, final Integer max) {
@@ -934,6 +945,23 @@ public class DataValidatorBuilder {
         }
         return this;
     }
+    public DataValidatorBuilder notvalidtype(final Integer max) {
+        if (this.value == null && this.ignoreNullValue) { return this; }
+
+        if (this.value != null && max != null) {
+            final Integer number = Integer.valueOf(this.value.toString());
+            if (number > max) {
+                final StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(this.resource).append(".")
+                        .append(this.parameter).append(" is.invalid");
+                final StringBuilder defaultEnglishMessage = new StringBuilder("The ").append(this.parameter)
+                        .append(" is invalid.");
+                final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
+                        defaultEnglishMessage.toString(), this.parameter, number, max);
+                this.dataValidationErrors.add(error);
+            }
+        }
+        return this;
+    }
 
     public DataValidatorBuilder matchesRegularExpression(final String expression) {
         if (this.value == null && this.ignoreNullValue) { return this; }
@@ -1106,5 +1134,17 @@ public class DataValidatorBuilder {
         }
         return this;
     }
+    public DataValidatorBuilder locationvalidation() {
+        
+        final StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(this.resource).append(".")
+                .append(this.parameter).append(".is.incorrectly.specificed");
+        final StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(this.parameter)
+                .append(" is incorrectly specified").append(".");
+        final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(),
+                defaultEnglishMessage.toString(), this.parameter," "," ");
+        this.dataValidationErrors.add(error);
+    
+    return this;
+}
 
 }

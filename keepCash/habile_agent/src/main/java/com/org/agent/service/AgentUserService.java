@@ -15,15 +15,17 @@ import com.org.agent.model.AgentUserEntity;
 @Service
 public interface AgentUserService {
 	
-	CommandProcessingResult createAgent(JsonCommand command, Long userId, Long parentUserId);
+	CommandProcessingResult createAgent(JsonCommand command, Long userId, Long parentUserId, Integer pinNumber);
 	 
 	AgentUserData retrieveAgent(Long userId);
+	
+	Collection<AgentUserData> retrieveAllAgents();
 	
 	Collection<AgentUserData> getByParentUserId(Long userId);
 	
 	CommandProcessingResult updateAgent(Long userId, JsonCommand command);
 	
-	AgentUserEntity updateCustomerUserEntity(Map<String, Object> changes,AgentUserEntity oldData,AppUser appUser,JsonCommand command);
+	AgentUserEntity updateAgentUserEntity(Map<String, Object> changes,AgentUserEntity oldData,AppUser appUser,JsonCommand command);
 
 	
 	CommandProcessingResult updateClientInAgentDetails(JsonCommand command, Long agentId);

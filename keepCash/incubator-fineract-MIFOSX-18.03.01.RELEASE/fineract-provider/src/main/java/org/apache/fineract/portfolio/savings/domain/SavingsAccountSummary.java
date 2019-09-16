@@ -140,4 +140,16 @@ public final class SavingsAccountSummary {
         return this.totalInterestPosted;
     }
 
+	public BigDecimal getTotalDeposits() {
+		return totalDeposits;
+	}
+
+	public void setTotalDeposits(BigDecimal totalDeposits) {
+		this.totalDeposits = totalDeposits;
+	}
+
+	public void setAccountBalance(BigDecimal accountBalance) {
+		this.accountBalance = accountBalance;
+	}
+
 }

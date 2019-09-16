@@ -18,7 +18,7 @@ public class ThrowErrorMessage {
 	    		
 	    		for(ApiParameterError dataValidationError: dataValidationErrors) {
 	    			JsonObject jsonObject = new JsonObject();
-	    			
+	    			jsonObject.addProperty("status"," failed");
 	        		jsonObject.addProperty("developerMessage", dataValidationError.getDeveloperMessage());
 	        		jsonObject.addProperty("defaultUserMessage", dataValidationError.getDefaultUserMessage());
 	        		jsonObject.addProperty("userMessageGlobalisationCode", dataValidationError.getUserMessageGlobalisationCode());
