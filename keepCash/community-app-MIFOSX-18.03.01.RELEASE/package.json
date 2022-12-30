@@ -20,7 +20,7 @@
     "grunt-hashres": "~0.3.4",
     "grunt-html-validation": "~0.1.13",
     "grunt-karma": "^2.0.0",
-    "grunt-replace": "~0.5.1",
+    "grunt-replace": "~2.0.2",
     "grunt-string-replace": "~0.2.7",
     "grunt-text-replace": "~0.3.10",
     "jshint-stylish": "~0.1.5",
